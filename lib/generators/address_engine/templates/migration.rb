@@ -1,18 +1,17 @@
 class CreateAddresses < ActiveRecord::Migration
   def self.up
-    create_table "addresses", :force => true do |t|
-      t.string   "email"
+    create_table "addresses" do |t|
       t.string   "first_name"
+      t.string   "middle_name"
       t.string   "last_name"
       t.text     "address"
       t.string   "city"
       t.string   "state_province_region"
       t.string   "zip_postal_code"
       t.string   "country"
+      t.string   "email"
       t.string   "phone"
-      t.datetime "created_at"
-      t.datetime "updated_at"
-      t.string   "middle_name"
+      t.timestamps
     end
   end
 
