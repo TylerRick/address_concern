@@ -17,8 +17,8 @@ Your'e done! You now have an `Address` model with some sensible validations and 
 
     create_table "addresses", :force => true do |t|
       t.string   "email"
-      t.string   "firstname"
-      t.string   "lastname"
+      t.string   "first_name"
+      t.string   "last_name"
       t.text     "address"
       t.string   "city"
       t.string   "state_province_region"
@@ -27,7 +27,7 @@ Your'e done! You now have an `Address` model with some sensible validations and 
       t.string   "phone"
       t.datetime "created_at"
       t.datetime "updated_at"
-      t.string   "middlename"
+      t.string   "middle_name"
     end
     
 Requires the `carmen` gem (https://rubygems.org/gems/carmen):

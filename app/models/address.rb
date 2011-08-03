@@ -1,6 +1,6 @@
 class Address < ActiveRecord::Base
   
-  validates_presence_of :firstname, :lastname
+  validates_presence_of :first_name, :last_name
   validates_presence_of :country
   validates_format_of :phone, :with => /^[0-9\-\+ ]*$/
   validates_format_of :email, :with => /^[^@]*@.*\.[^\.]*$/, :message => 'is invalid. Please enter an address in the format of your@email_address.com'
@@ -24,8 +24,8 @@ class Address < ActiveRecord::Base
   
   def name
     [].tap do |out|
-      out << firstname if firstname.present?
-      out << lastname if lastname.present?
+      out << first_name if first_name.present?
+      out << last_name if last_name.present?
     end.join(' ')
   end
   
