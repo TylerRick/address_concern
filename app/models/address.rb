@@ -10,14 +10,6 @@ class Address < ActiveRecord::Base
     Carmen::country_name(country)
   end
   
-  def order
-    order_as_shipping.present? ? order_as_shipping : order_as_billing
-  end
-  
-  def shipping_rules
-    ShippingRule.for_country(country)
-  end
-  
   def filled_in?
     address? && country?
   end
