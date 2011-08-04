@@ -15,19 +15,17 @@ then run the generator to create your addresses table:
 
 Your'e done! You now have an `Address` model with some sensible validations and fields that will go a long long way:
 
-    create_table "addresses", :force => true do |t|
-      t.string   "email"
-      t.string   "first_name"
-      t.string   "last_name"
+    create_table "addresses" do |t|
+      t.references :addressable, :polymorphic => true
+      t.string   "name"
       t.text     "address"
       t.string   "city"
       t.string   "state_province_region"
       t.string   "zip_postal_code"
       t.string   "country"
+      t.string   "email"
       t.string   "phone"
-      t.datetime "created_at"
-      t.datetime "updated_at"
-      t.string   "middle_name"
+      t.timestamps
     end
     
 Requires the `carmen` gem (https://rubygems.org/gems/carmen):

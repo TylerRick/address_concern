@@ -1,7 +1,7 @@
 class Address < ActiveRecord::Base
   belongs_to :addressable, :polymorphic => true
   
-  #validates_presence_of :first_name, :last_name
+  #validates_presence_of :name
   #validates_presence_of :address
   #validates_presence_of :country
   #validates_format_of :phone, :with => /^[0-9\-\+ ]*$/
@@ -14,13 +14,6 @@ class Address < ActiveRecord::Base
   
   def filled_in?
     address? && country?
-  end
-  
-  def name
-    [].tap do |out|
-      out << first_name if first_name.present?
-      out << last_name if last_name.present?
-    end.join(' ')
   end
   
   def parts
