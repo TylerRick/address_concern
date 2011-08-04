@@ -1,6 +1,6 @@
 # Address Engine #
 
-An `Address` model for your Rails 3 apps. Fields inspired from Amazon.com:
+An `Address` model for your Rails 3 apps.
 
 # Installation #
 
@@ -20,8 +20,8 @@ Your'e done! You now have an `Address` model with some sensible validations and 
       t.string   "name"
       t.text     "address"
       t.string   "city"
-      t.string   "state_province_region"
-      t.string   "zip_postal_code"
+      t.string   "province"
+      t.string   "postal_code"
       t.string   "country"
       t.string   "email"
       t.string   "phone"

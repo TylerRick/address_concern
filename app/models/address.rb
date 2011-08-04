@@ -25,8 +25,8 @@ class Address < ActiveRecord::Base
         end
       end
       out << city if city.present?
-      out << state_province_region if state_province_region.present?
-      out << zip_postal_code if zip_postal_code.present?
+      out << province if province.present?
+      out << postal_code if postal_code.present?
       out << country_name if country.present?
     end
   end
@@ -43,8 +43,8 @@ class Address < ActiveRecord::Base
       
       last_line = []
       last_line << city if city.present?
-      last_line << state_province_region if state_province_region.present?
-      last_line << zip_postal_code if zip_postal_code.present?
+      last_line << province if province.present?
+      last_line << postal_code if postal_code.present?
 
       out << last_line.join(', ')
       out << country_name if country.present?
