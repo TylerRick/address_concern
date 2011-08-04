@@ -2,9 +2,9 @@ class Address < ActiveRecord::Base
   
   validates_presence_of :first_name, :last_name
   validates_presence_of :country
-  validates_format_of :phone, :with => /^[0-9\-\+ ]*$/
-  validates_format_of :email, :with => /^[^@]*@.*\.[^\.]*$/, :message => 'is invalid. Please enter an address in the format of your@email_address.com'
-  validates_presence_of :phone, :message => ' is required.'
+  #validates_format_of :phone, :with => /^[0-9\-\+ ]*$/
+  validates_format_of :email, :with => /^[^@]*@.*\.[^\.]*$/, :message => 'is invalid. Please enter an address in the format of you@company.com'
+  #validates_presence_of :phone, :message => ' is required.'
   
   def country_name
     Carmen::country_name(country)
