@@ -1,11 +1,11 @@
 class Address < ActiveRecord::Base
   belongs_to :addressable, :polymorphic => true
   
-  validates_presence_of :first_name, :last_name
-  validates_presence_of :address
-  validates_presence_of :country
+  #validates_presence_of :first_name, :last_name
+  #validates_presence_of :address
+  #validates_presence_of :country
   #validates_format_of :phone, :with => /^[0-9\-\+ ]*$/
-  validates_format_of :email, :with => /^[^@]*@.*\.[^\.]*$/, :message => 'is invalid. Please enter an address in the format of you@company.com'
+  #validates_format_of :email, :with => /^[^@]*@.*\.[^\.]*$/, :message => 'is invalid. Please enter an address in the format of you@company.com'
   #validates_presence_of :phone, :message => ' is required.'
   
   def country_name
