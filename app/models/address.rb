@@ -8,8 +8,23 @@ class Address < ActiveRecord::Base
   #validates_format_of :email, :with => /^[^@]*@.*\.[^\.]*$/, :message => 'is invalid. Please enter an address in the format of you@company.com'
   #validates_presence_of :phone, :message => ' is required.'
   
+  def country_code
+    country #_code
+  end
+  def country_code=(code)
+    self.country = code #_code
+  end
   def country_name
+    return if country.blank?
     Carmen::country_name(country)
+    #Carmen::country_name(country_code)
+  end
+  def country_name=(name)
+    if name.blank?
+      self.country_code = nil
+    else
+      self.country_code = Carmen::country_code(name)
+    end
   end
   
   def filled_in?
