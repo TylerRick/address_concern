@@ -3,6 +3,7 @@ PATH
   specs:
     address_engine (1.0.2)
       activerecord (~> 3.0)
+      carmen
       cucumber
       rails (~> 3.0)
       rake
@@ -40,6 +41,7 @@ GEM
     activesupport (3.0.9)
     arel (2.0.10)
     builder (2.1.2)
+    carmen (0.2.8)
     cucumber (1.0.2)
       builder (>= 2.1.2)
       diff-lcs (>= 1.1.2)

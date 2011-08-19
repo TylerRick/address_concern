@@ -27,10 +27,6 @@ Your'e done! You now have an `Address` model with some sensible validations and 
       t.string   "phone"
       t.timestamps
     end
-    
-Requires the `carmen` gem (https://rubygems.org/gems/carmen):
-
-    gem install carmen
 
 ## Copyright ##
 

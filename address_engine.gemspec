@@ -17,6 +17,7 @@ Gem::Specification.new do |s|
   s.add_dependency "cucumber"
   s.add_dependency "rails", "~> 3.0"
   s.add_dependency "activerecord", "~> 3.0"
+  s.add_dependency "carmen"
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
