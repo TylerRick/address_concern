@@ -13,11 +13,17 @@ Gem::Specification.new do |s|
   s.licenses = ["MIT"]
 
   s.add_dependency "rake"
-  s.add_dependency "rspec"
   s.add_dependency "cucumber"
   s.add_dependency "rails", "~> 3.0"
   s.add_dependency "activerecord", "~> 3.0"
   s.add_dependency "carmen"
+
+  s.add_development_dependency 'rspec'
+  s.add_development_dependency 'sqlite3'
+  s.add_development_dependency 'mysql2'
+ #s.add_development_dependency 'rr'
+ #s.add_development_dependency 'activesupport'
+  s.add_development_dependency 'ruby-debug19'
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")

@@ -1,0 +1,3 @@
+adapter: mysql2
+database: address_engine_test
+username: root
