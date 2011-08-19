@@ -1,7 +1,6 @@
 require 'bundler'
 require 'bundler/setup'
-#Bundler.require(:default)
-require 'carmen'
+Bundler.require(:default, :development)
 
 #---------------------------------------------------------------------------------------------------
 
@@ -17,13 +16,17 @@ driver = (ENV["DB"] or "sqlite3").downcase
 database_config = YAML::load(File.open(__DIR__ + "support/database.#{driver}.yml"))
 ActiveRecord::Base.establish_connection(database_config)
 
+require __DIR__ + 'support/schema'
+require 'generators/address_engine/templates/migration'
+CreateAddresses.up
+
 #---------------------------------------------------------------------------------------------------
 # RSpec
 
 require 'rspec'
 
 RSpec.configure do |config|
-  #
+  config.include AttributeNormalizer::RSpecMatcher #, :type => :models
 end
 
 require 'address_engine'
