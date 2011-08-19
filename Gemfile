@@ -1,8 +1,4 @@
-source 'http://rubygems.org'
+source "http://rubygems.org"
 
-group :development do
-  gem 'rake'
-  gem 'jeweler'
-  gem 'rspec'
-  gem 'cucumber'
-end
+# Specify your gem's dependencies in address_engine.gemspec
+gemspec

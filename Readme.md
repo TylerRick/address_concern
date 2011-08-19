@@ -1,6 +1,6 @@
 # Address Engine #
 
-An `Address` model for your Rails 3 apps.
+A reusable `Address` model for your Rails 3 apps.
 
 # Installation #
 
