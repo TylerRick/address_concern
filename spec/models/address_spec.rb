@@ -108,4 +108,42 @@ describe Address do
       Address.new(address: '444 Z St.', state: 'Washington', country: 'USA'))
     end
   end
+
+  describe 'associations' do
+    describe 'has_one' do
+      let(:company) { Company.create }
+
+      it do
+        company.address.should == nil
+        address = company.build_address(address: '1')
+        company.save!
+        company.reload.address.should == address
+      end
+
+    end
+
+    describe 'has_many' do
+      let(:user) { User.create }
+
+      it do
+        user.addresses.should == []
+        address_1 = user.addresses.build(address: '1')
+        address_2 = user.addresses.build(address: '2')
+        user.save!; user.reload
+        user.addresses.should == [address_1, address_2]
+      end
+
+      specify 'should able to set and retrieve a specific address by type (shipping or billing)' do
+        physical_address = user.build_physical_address(address: 'Physical')
+        shipping_address = user.build_shipping_address(address: 'Shipping')
+        billing_address  = user.build_billing_address( address: 'Billing')
+        vacation_address = user.addresses.build(address: 'Vacation', :address_type => 'Vacation')
+        user.save!; user.reload
+        user.physical_address.should == physical_address
+        user.shipping_address.should == shipping_address
+        user.billing_address. should == billing_address
+        user.addresses.to_set.should == [physical_address, shipping_address, billing_address, vacation_address].to_set
+      end
+    end
+  end
 end

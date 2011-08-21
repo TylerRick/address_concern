@@ -2,6 +2,8 @@ class CreateAddresses < ActiveRecord::Migration
   def self.up
     create_table :addresses do |t|
       t.references :addressable, :polymorphic => true
+      t.string   :address_type   # to allow shipping/billing/etc. address
+
       t.string   :name
       t.text     :address
       t.string   :city
@@ -18,11 +20,14 @@ class CreateAddresses < ActiveRecord::Migration
     change_table :addresses do |t|
       t.index  :addressable_id
       t.index  :addressable_type
+      t.index  :address_type
       t.index  :name
       t.index  :state
       t.index  :country
       t.index  :country_alpha2
       t.index  :country_alpha3
+      t.index  :email
+      t.index  :phone
     end
   end
 

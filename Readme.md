@@ -49,6 +49,34 @@ You can compare Address objects using the same_as? method (provided by `active_r
 Example:
 ...
 
+Adding an `address` association to your ActiveRecord models
+===========================================================
+
+In any model that you wish to have an `address` or `addresses` association, just add a `has_address` or `has_addresses` line (respectively), like this:
+
+    class Company < ActiveRecord::Base
+      has_address
+    end
+
+    class User < ActiveRecord::Base
+      has_addresses
+    end
+
+If you want to have several *individually accessible* addresses associated with a single model (such as a separate shipping and billing address), you can do something like this:
+
+    class User < ActiveRecord::Base
+      has_addresses :types => [:physical, :shipping, :billing]
+    end
+
+Then you can refer to them by name, like this:
+
+    shipping_address = user.build_shipping_address(address: 'Some address')
+    user.shipping_address # => shipping_address
+
+Note that you aren't *limited* to only the address types you specifically list in your `has_addresses` declaration; you can still add and retrieve other addresses using the `has_many :addresses` association:
+
+    vacation_address = user.addresses.build(address: 'Vacation', :address_type => 'Vacation')
+    user.addresses # => [shipping_address, vacation_address]
 
 Copyright
 =========

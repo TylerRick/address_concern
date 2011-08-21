@@ -12,6 +12,11 @@ $LOAD_PATH.unshift __DIR__ + '../lib'
 # ActiveRecord
 
 require 'active_record'
+
+log_file_path = __DIR__ + 'test.log'
+log_file_path.truncate(0) rescue nil
+ActiveRecord::Base.logger = Logger.new(log_file_path)
+
 driver = (ENV["DB"] or "sqlite3").downcase
 database_config = YAML::load(File.open(__DIR__ + "support/database.#{driver}.yml"))
 ActiveRecord::Base.establish_connection(database_config)
