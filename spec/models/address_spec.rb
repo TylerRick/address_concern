@@ -19,11 +19,37 @@ describe Address do
       }.to change(address, :country_code).to(nil)
     end
 
-    specify 'setting to a country that is part of another country (weird)' do
+    describe 'setting to a country that is part of another country (weird)' do; specify do
       address.country = 'Northern Ireland'
-      address.country_name.should == 'Northern Ireland'
       address.country_code.should == 'GB'
-      Carmen::country_name(address.country_code).should == 'United Kingdom'
+      address.country_name.should           == 'Northern Ireland'
+      address.country_name_from_code.should == 'United Kingdom'
+    end; end
+
+    describe 'country aliases:' do
+      1.times do specify _='USA' do
+        address.country = _
+        address.country_name.should           == 'United States'
+        address.country_name_from_code.should == 'United States'
+      end; end
+
+      1.times do specify _='Vietnam' do
+        address.country = _
+        address.country_name.should           == 'Viet Nam'
+        address.country_name_from_code.should == 'Viet Nam'
+      end; end
+
+      1.times do specify _='Democratic Republic of Congo' do
+        address.country = _
+        address.country_name.should           == 'Democratic Republic of Congo'
+        address.country_name_from_code.should == "Congo, the Democratic Republic of the"
+      end; end
+
+      1.times do specify _='Republic of Macedonia' do
+        address.country = _
+        address.country_name.should           == 'Republic of Macedonia'
+        address.country_name_from_code.should == "Macedonia, the Former Yugoslav Republic of"
+      end; end
     end
   end
 
@@ -64,7 +90,7 @@ describe Address do
   describe 'normalization' do
     describe 'address' do
       it { should normalize_attribute(:address).from("  Line 1  \n    Line 2    \n    ").to("Line 1\nLine 2")}
-      [:name, :address, :city, :state, :postal_code, :country].each do |attr_name|
+      [:name, :city, :state, :postal_code, :country].each do |attr_name|
         it { should normalize_attribute(attr_name) }
       end
     end

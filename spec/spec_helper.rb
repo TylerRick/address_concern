@@ -30,6 +30,9 @@ CreateAddresses.up
 
 require 'rspec'
 
+require 'active_record_ignored_attributes/matchers'
+
+
 RSpec.configure do |config|
   config.include AttributeNormalizer::RSpecMatcher #, :type => :models
 end

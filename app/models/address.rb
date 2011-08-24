@@ -11,7 +11,7 @@ class Address < ActiveRecord::Base
   
   #-------------------------------------------------------------------------------------------------
   normalize_attributes :name, :city, :state, :postal_code, :country
-  normalize_attribute  :address, :with => [:cleanlines, :strip, :blank]
+  normalize_attribute  :address, :with => [:cleanlines, :strip]
 
   #-------------------------------------------------------------------------------------------------
   # Country code
@@ -50,9 +50,14 @@ class Address < ActiveRecord::Base
       name = case name
       when 'USA'
         'United States'
+      when 'Vietnam'
+        'Viet Nam'
+      when 'Democratic Republic of the Congo', 'Democratic Republic of Congo'
+        name_for_code = "Congo, the Democratic Republic of the"; name
+      when 'Republic of Macedonia', 'Macedonia'
+        name_for_code = "Macedonia, the Former Yugoslav Republic of"; name
       when 'England', 'Scotland', 'Wales', 'Northern Ireland'
-        name_for_code = 'United Kingdom'
-        name
+        name_for_code = 'United Kingdom'; name
       else
         name
       end
@@ -67,6 +72,11 @@ class Address < ActiveRecord::Base
         write_attribute(:country_alpha3, nil)
       end
     end
+  end
+
+  # Sometimes this will be different from the value stored in the country attribute
+  def country_name_from_code
+    Carmen::country_name(country_code)
   end
 
   # Aliases
@@ -91,7 +101,7 @@ class Address < ActiveRecord::Base
   def parts
     [
       name,
-      address.lines.to_a,
+      address.to_s.lines.to_a,
       city,
       state,
       postal_code,
@@ -102,7 +112,7 @@ class Address < ActiveRecord::Base
   def lines
     [
       name,
-      address.lines.to_a,
+      address.to_s.lines.to_a,
       city_line,
       country_name,
     ].flatten.reject(&:blank?)
