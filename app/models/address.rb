@@ -89,6 +89,12 @@ class Address < ActiveRecord::Base
 
   #-------------------------------------------------------------------------------------------------
   
+  def empty?
+    [:address, :city, :state, :postal_code, :country].all? {|_|
+      !self[_].present?
+    }
+  end
+
   def started_filling_out?
     [:address, :city, :state, :postal_code, :country].any? {|_|
       self[_].present?
