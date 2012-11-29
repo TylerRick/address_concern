@@ -4,7 +4,7 @@ require "address_engine/version"
 
 Gem::Specification.new do |s|
   s.name        = "address_engine"
-  s.version     = AddressEngine::Version
+  s.version     = AddressEngine.version
   s.authors     = ["Paul Campbell", "Tyler Rick"]
   s.email       = ["paul@rslw.com", "github.com@tylerrick.com"]
   s.homepage    = %q{http://github.com/TylerRick/address_engine}
