@@ -1,6 +1,4 @@
 class Address < ActiveRecord::Base
-  belongs_to :addressable, :polymorphic => true
-  
   #validates_presence_of :name
   #validates_presence_of :address
   #validates_presence_of :state, :if => :state_required?

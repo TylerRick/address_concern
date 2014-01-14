@@ -136,7 +136,11 @@ describe Address do
   end
 
   describe 'associations' do
-    describe 'has_one' do
+    # To do (or maybe not even necessary—seems to work with only the has_one side of the association):
+    #describe 'when we have a polymorphic belongs_to :addressable in Address' do
+    #belongs_to :addressable, :polymorphic => true
+
+    describe 'has_one :address' do
       let(:company) { Company.create }
 
       it do
@@ -148,7 +152,7 @@ describe Address do
 
     end
 
-    describe 'has_many' do
+    describe 'has_many :addresses' do
       let(:user) { User.create }
 
       it do
