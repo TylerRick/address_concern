@@ -48,7 +48,7 @@ describe Address do
       1.times do specify _='Republic of Macedonia' do
         address.country = _
         address.country_name.should           == 'Republic of Macedonia'
-        address.country_name_from_code.should == "Macedonia, the Former Yugoslav Republic of"
+        address.country_name_from_code.should == "Macedonia, The Former Yugoslav Republic Of"
       end; end
     end
   end

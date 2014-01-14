@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
   s.add_dependency "rails", "~> 3.0"
   s.add_dependency "activerecord", "~> 3.0"
   s.add_dependency "activesupport", "~> 3.0"
-  s.add_dependency "carmen"
+  s.add_dependency "carmen", '~> 0.2'
   s.add_dependency "attribute_normalizer"
   s.add_dependency "active_record_ignored_attributes"
   s.add_dependency "facets"
@@ -25,9 +25,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'sqlite3'
   s.add_development_dependency 'mysql2', '~>0.2.11'
- #s.add_development_dependency 'rr'
- #s.add_development_dependency 'activesupport'
-  s.add_development_dependency 'ruby-debug19'
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
