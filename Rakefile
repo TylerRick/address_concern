@@ -7,9 +7,13 @@ RSpec::Core::RakeTask.new(:spec) do |spec|
   spec.pattern = FileList['spec/**/*_spec.rb']
 end
 
-RSpec::Core::RakeTask.new(:rcov) do |spec|
-  spec.pattern = 'spec/**/*_spec.rb'
-  spec.rcov = true
+desc "Start a console with this version of library loaded"
+task :console do
+  require 'bundler/setup'
+  require 'address_engine'
+  require 'irb'
+  ARGV.clear
+  IRB.start
 end
 
 task :default => :spec
