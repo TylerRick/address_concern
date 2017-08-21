@@ -20,7 +20,7 @@ class Address < ActiveRecord::Base
       write_attribute(:country_alpha2, nil)
       write_attribute(:country_alpha3, nil)
 
-    elsif (country = self.class.carmen_country_alpha_2_coded(code))
+    elsif (country = Carmen::Country.alpha_2_coded(code))
       # Only set it if it's a recognized country code
       write_attribute(:country, country.name)
       write_attribute(:country_alpha2, code)
@@ -73,14 +73,9 @@ class Address < ActiveRecord::Base
   # Sometimes this will be different from the value stored in the country attribute
   def country_name_from_code
     # In Carmen master/unreleased 1.0.3, could do this:
-    # if (country = Carmen::Country.alpha_2_coded(country_alpha2))
-    if (country = self.class.carmen_country_alpha_2_coded(country_alpha2.downcase))
+    if (country = Carmen::Country.alpha_2_coded(country_alpha2))
       country.name
     end
-  end
-
-  def self.carmen_country_alpha_2_coded(country_alpha2)
-    Carmen::Country.query_collection.find {|region| region.alpha_2_code.downcase == country_alpha2.downcase }
   end
 
   # Aliases
