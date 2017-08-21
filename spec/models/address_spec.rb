@@ -13,10 +13,12 @@ describe Address do
       # Set it to a known country first to show that it actually *clears* these fields if they were previously set
       address.country = 'Iceland'
 
-      expect { expect {
+      #expect { expect {
       address.country = 'Fireland'
-      }.to change(address, :country_name).to(nil)
-      }.to change(address, :country_code).to(nil)
+      #}.to change(address, :country_name).to(nil)
+      #}.to change(address, :country_code).to(nil)
+      address.country_name.should eq nil
+      address.country_code.should eq nil
     end
 
     describe 'setting to a country that is part of another country (weird)' do; specify do
@@ -65,10 +67,12 @@ describe Address do
       # Set it to a known country first to show that it actually *clears* these fields if they were previously set
       address.country_code = 'IS'
 
-      expect { expect {
+      #expect { expect {
       address.country = 'FL'
-      }.to change(address, :country_name).to(nil)
-      }.to change(address, :country_code).to(nil)
+      #}.to change(address, :country_name).to(nil)
+      #}.to change(address, :country_code).to(nil)
+      address.country_name.should eq nil
+      address.country_code.should eq nil
     end
 
     specify 'setting to a country that is part of another country (weird)' do
