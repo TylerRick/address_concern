@@ -139,6 +139,21 @@ describe Address do
     end
   end
 
+  describe '#carmen_country' do
+    it { Address.new(country: 'South Africa').carmen_country.should be_a Carmen::Country }
+  end
+  describe '#states_for_country' do
+    it { Address.new(country: 'USA').         states_for_country.map(&:name).should include 'Ohio' }
+    it { Address.new(country: 'South Africa').states_for_country.map(&:name).should include 'Mpumalanga' }
+    # Not ["Northern Ireland", "Middlesex", "Wiltshire"]
+    it { Address.new(country: 'United Kingdom').states_for_country.map(&:name).should eq [] }
+  end
+  describe '#carmen_state' do
+    it { Address.new(country: 'USA',          state: 'OH!').carmen_state.should be_nil }
+    it { Address.new(country: 'USA',          state: 'OH').carmen_state.should be_a Carmen::Region }
+    it { Address.new(country: 'South Africa', state: 'MP').carmen_state.should be_a Carmen::Region }
+  end
+
   describe 'associations' do
     # To do (or maybe not even necessary—seems to work with only the has_one side of the association):
     #describe 'when we have a polymorphic belongs_to :addressable in Address' do

@@ -34,6 +34,19 @@ class Address < ActiveRecord::Base
   def country_code=(code)
     self.country_alpha2 = code
   end
+  def state_code
+    state
+  end
+
+  def carmen_country
+    Carmen::Country.alpha_2_coded(country_alpha2)
+  end
+
+  def carmen_state
+    if (country = carmen_country)
+      Address.states_for_country(country).coded(state_code)
+    end
+  end
 
   #-------------------------------------------------------------------------------------------------
   # Country name
@@ -84,6 +97,28 @@ class Address < ActiveRecord::Base
   end
   def country_name=(name)
     self.country = name
+  end
+
+  #-------------------------------------------------------------------------------------------------
+  def self.states_for_country(carmen_country)
+    return [] unless carmen_country
+    Carmen::RegionCollection.new(
+      (
+        carmen_country.subregions.typed('state') +
+        carmen_country.subregions.typed('province')
+      ).reject {|region|
+        # This would otherwise return: ["Northern Ireland", "Middlesex", "Wiltshire"]
+        # But that is not an expected answer. The UK has tons of subregions, and apparently 3 of
+        # them are considered provinces, but most of them are not, so the answer to "Does the UK
+        # have a standard list of states/provinces?" is presumably "no" and one would accordingly
+        # expect this to be an empty list, so that for example, it won't list these options in a
+        # state picker on an address form.
+        carmen_country.code == 'GB'
+      }
+    )
+  end
+  def states_for_country
+    self.class.states_for_country(carmen_country)
   end
 
   #-------------------------------------------------------------------------------------------------
