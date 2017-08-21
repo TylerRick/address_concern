@@ -48,6 +48,7 @@ GEM
     arel (3.0.3)
     attribute_normalizer (1.2.0)
     builder (3.0.4)
+    byebug (9.0.6)
     carmen (1.0.2)
       activesupport (>= 3.0.0)
     cucumber (2.4.0)
@@ -132,6 +133,7 @@ PLATFORMS
 
 DEPENDENCIES
   address_engine!
+  byebug
   rspec
   sqlite3
 

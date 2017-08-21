@@ -22,6 +22,7 @@ Gem::Specification.new do |s|
   s.add_dependency "active_record_ignored_attributes"
   s.add_dependency "facets"
 
+  s.add_development_dependency 'byebug'
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'sqlite3'
   #s.add_development_dependency 'mysql2', '~>0.2.11'
