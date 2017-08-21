@@ -6,7 +6,7 @@ class Address < ActiveRecord::Base
   #validates_format_of :phone, :with => /^[0-9\-\+ ]*$/
   #validates_format_of :email, :with => /^[^@]*@.*\.[^\.]*$/, :message => 'is invalid. Please enter an address in the format of you@company.com'
   #validates_presence_of :phone, :message => ' is required.'
-  
+
   #-------------------------------------------------------------------------------------------------
   normalize_attributes :name, :city, :state, :postal_code, :country
   normalize_attribute  :address, :with => [:cleanlines, :strip]
@@ -20,9 +20,9 @@ class Address < ActiveRecord::Base
       write_attribute(:country_alpha2, nil)
       write_attribute(:country_alpha3, nil)
 
-    elsif (name = Carmen::country_name(code))
+    elsif (country = self.class.carmen_country_alpha_2_coded(code))
       # Only set it if it's a recognized country code
-      write_attribute(:country, name)
+      write_attribute(:country, country.name)
       write_attribute(:country_alpha2, code)
     end
   end
@@ -38,7 +38,6 @@ class Address < ActiveRecord::Base
   #-------------------------------------------------------------------------------------------------
   # Country name
 
-  # TODO: we could detect if they're passing in a name or a code (if length <= 2) and delegate to country_code= if it's a code
   def country=(name)
     if name.blank?
       write_attribute(:country, nil)
@@ -48,12 +47,10 @@ class Address < ActiveRecord::Base
       name = case name
       when 'USA'
         'United States'
-      when 'Vietnam'
-        'Viet Nam'
       when 'Democratic Republic of the Congo', 'Democratic Republic of Congo'
         name_for_code = "Congo, the Democratic Republic of the"; name
-      when 'Republic of Macedonia', 'Macedonia'
-        name_for_code = "Macedonia, the Former Yugoslav Republic of"; name
+      when 'Republic of Macedonia', 'Macedonia, Republic of', 'Macedonia'
+        name_for_code = "Macedonia, Republic of"; name
       when 'England', 'Scotland', 'Wales', 'Northern Ireland'
         name_for_code = 'United Kingdom'; name
       else
@@ -61,9 +58,10 @@ class Address < ActiveRecord::Base
       end
       name_for_code ||= name
 
-      if (code = Carmen::country_code(name_for_code))
+      if (country = Carmen::Country.named(name_for_code))
         write_attribute(:country, name)
-        write_attribute(:country_alpha2, code)
+        write_attribute(:country_alpha2, country.alpha_2_code)
+        write_attribute(:country_alpha3, country.alpha_3_code)
       else
         write_attribute(:country, nil)
         write_attribute(:country_alpha2, nil)
@@ -74,7 +72,15 @@ class Address < ActiveRecord::Base
 
   # Sometimes this will be different from the value stored in the country attribute
   def country_name_from_code
-    Carmen::country_name(country_code)
+    # In Carmen master/unreleased 1.0.3, could do this:
+    # if (country = Carmen::Country.alpha_2_coded(country_alpha2))
+    if (country = self.class.carmen_country_alpha_2_coded(country_alpha2.downcase))
+      country.name
+    end
+  end
+
+  def self.carmen_country_alpha_2_coded(country_alpha2)
+    Carmen::Country.query_collection.find {|region| region.alpha_2_code.downcase == country_alpha2.downcase }
   end
 
   # Aliases
@@ -86,7 +92,7 @@ class Address < ActiveRecord::Base
   end
 
   #-------------------------------------------------------------------------------------------------
-  
+
   def empty?
     [:address, :city, :state, :postal_code, :country].all? {|_|
       !self[_].present?
@@ -100,7 +106,7 @@ class Address < ActiveRecord::Base
   end
 
   #-------------------------------------------------------------------------------------------------
-  
+
   # TODO: remove? when is this useful?
   def parts
     [
@@ -112,7 +118,7 @@ class Address < ActiveRecord::Base
       country_name,
     ].flatten.reject(&:blank?)
   end
-  
+
   def lines
     [
       name,
@@ -139,6 +145,6 @@ class Address < ActiveRecord::Base
   def inspect
     inspect_with([:id, :name, :address, :city, :state, :postal_code, :country], ['{', '}'])
   end
-  
+
   #-------------------------------------------------------------------------------------------------
 end

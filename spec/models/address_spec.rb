@@ -37,20 +37,20 @@ describe Address do
 
       1.times do specify _='Vietnam' do
         address.country = _
-        address.country_name.should           == 'Viet Nam'
-        address.country_name_from_code.should == 'Viet Nam'
+        address.country_name.should           == 'Vietnam'
+        address.country_name_from_code.should == 'Vietnam'
       end; end
 
       1.times do specify _='Democratic Republic of Congo' do
         address.country = _
         address.country_name.should           == 'Democratic Republic of Congo'
-        address.country_name_from_code.should == "Congo, the Democratic Republic of the"
+        address.country_name_from_code.should == "Congo, The Democratic Republic of the"
       end; end
 
-      1.times do specify _='Republic of Macedonia' do
+      ['Macedonia', 'Republic of Macedonia'].each do |_| specify _ do
         address.country = _
-        address.country_name.should           == 'Republic of Macedonia'
-        address.country_name_from_code.should == "Macedonia, The Former Yugoslav Republic Of"
+        address.country_name.should           == _
+        address.country_name_from_code.should == 'Macedonia, Republic of'
       end; end
     end
   end
