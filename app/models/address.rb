@@ -102,6 +102,7 @@ class Address < ActiveRecord::Base
   #-------------------------------------------------------------------------------------------------
   def self.states_for_country(carmen_country)
     return [] unless carmen_country
+    raise ArgumentError.new('expected a Carmen::Country') unless carmen_country.is_a? Carmen::Country
     Carmen::RegionCollection.new(
       (
         carmen_country.subregions.typed('state') +
