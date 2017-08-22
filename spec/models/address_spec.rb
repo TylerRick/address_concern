@@ -147,6 +147,7 @@ describe Address do
     it { Address.new(country: 'South Africa').states_for_country.map(&:name).should include 'Mpumalanga' }
     # Not ["Northern Ireland", "Middlesex", "Wiltshire"]
     it { Address.new(country: 'United Kingdom').states_for_country.map(&:name).should eq [] }
+    it { Address.new(country: 'Kenya').states_for_country.map(&:name).should eq [] }
   end
   describe '#carmen_state' do
     it { Address.new(country: 'USA',          state: 'OH!').carmen_state.should be_nil }

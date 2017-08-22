@@ -100,6 +100,8 @@ class Address < ActiveRecord::Base
   end
 
   #-------------------------------------------------------------------------------------------------
+  # This is useful if want to list the state options allowed for a country in a select box and
+  # restrict entry to only officially listed state options.
   def self.states_for_country(carmen_country)
     return [] unless carmen_country
     raise ArgumentError.new('expected a Carmen::Country') unless carmen_country.is_a? Carmen::Country
@@ -115,7 +117,10 @@ class Address < ActiveRecord::Base
         # have a standard list of states/provinces?" is presumably "no" and one would accordingly
         # expect this to be an empty list, so that for example, it won't list these options in a
         # state picker on an address form.
-        carmen_country.code == 'GB'
+        carmen_country.code == 'GB' ||
+        # https://en.wikipedia.org/wiki/Provinces_of_Kenya
+        # Kenya's provinces were replaced by a system of counties in 2013.
+        carmen_country.code == 'KE'
       }
     )
   end
