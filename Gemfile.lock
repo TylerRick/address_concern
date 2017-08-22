@@ -8,7 +8,7 @@ GIT
 PATH
   remote: .
   specs:
-    address_engine (1.0.3)
+    address_engine (1.1.0)
       active_record_ignored_attributes
       activerecord (~> 3.0)
       activesupport (~> 3.0)
