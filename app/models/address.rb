@@ -106,7 +106,8 @@ class Address < ActiveRecord::Base
     Carmen::RegionCollection.new(
       (
         carmen_country.subregions.typed('state') +
-        carmen_country.subregions.typed('province')
+        carmen_country.subregions.typed('province') +
+      ((carmen_country.subregions.typed('apo') if carmen_country.code == 'US') || [])
       ).reject {|region|
         # This would otherwise return: ["Northern Ireland", "Middlesex", "Wiltshire"]
         # But that is not an expected answer. The UK has tons of subregions, and apparently 3 of

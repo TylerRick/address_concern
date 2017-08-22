@@ -151,6 +151,7 @@ describe Address do
   describe '#carmen_state' do
     it { Address.new(country: 'USA',          state: 'OH!').carmen_state.should be_nil }
     it { Address.new(country: 'USA',          state: 'OH').carmen_state.should be_a Carmen::Region }
+    it { Address.new(country: 'USA',          state: 'AA').carmen_state.should be_a Carmen::Region }
     it { Address.new(country: 'South Africa', state: 'MP').carmen_state.should be_a Carmen::Region }
   end
 
