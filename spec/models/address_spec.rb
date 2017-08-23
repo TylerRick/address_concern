@@ -183,6 +183,8 @@ describe Address do
     it { Address.new(country: 'Denmark').state_options.should be_many }
     it { Address.new(country: 'Denmark').state_options.map(&:name).should include 'Sjælland' }
     it { Address.new(country: 'Denmark').state_possibly_included_in_postal_address?.should eq false }
+    # Auckland (AUK) is a subregion of the North Island (N) subregion
+    it { Address.new(country: 'New Zealand').state_options.map(&:code).should include 'AUK' }
   end
 
   describe 'associations' do
