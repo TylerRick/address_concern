@@ -117,8 +117,9 @@ class Address < ActiveRecord::Base
         # At the time of this writing, however, it doesn't look like Carmen has been updated to
         # include the 47 counties listed under https://en.wikipedia.org/wiki/ISO_3166-2:KE.
         country.subregions.typed('county')
-      elsif country.name == 'New Zealand'
-        country.subregions.map(&:subregions).flatten
+      elsif country.name == 'New Zealand' ||
+            country.name == 'Philippines'
+        country.subregions.map {|_| _.subregions.any? ? _.subregions : _ }.flatten
       else
         country.subregions
       end
