@@ -57,6 +57,7 @@ class Address < ActiveRecord::Base
       write_attribute(:country_alpha2, nil)
       write_attribute(:country_alpha3, nil)
     else
+      name = recognize_country_name_alias(name)
       if (country = Carmen::Country.named(name))
         write_attribute(:country,        country.name)
         write_attribute(:country_alpha2, country.alpha_2_code)
@@ -66,6 +67,18 @@ class Address < ActiveRecord::Base
         write_attribute(:country_alpha2, nil)
         write_attribute(:country_alpha3, nil)
       end
+    end
+  end
+
+  def recognize_country_name_alias(name)
+    name = case name
+    when 'USA'
+    when 'The Democratic Republic of the Congo', 'Democratic Republic of the Congo'
+      'Congo, the Democratic Republic of the'
+    when 'Republic of Macedonia', 'Macedonia, Republic of', 'Macedonia'
+      'Macedonia, Republic of'
+    else
+      name
     end
   end
 
