@@ -208,6 +208,12 @@ describe Address do
     it { Address.new(country: 'Philippines').state_options.map(&:code).should include 'ABR' }
     # National Capital Region (00) is a top-level region
     it { Address.new(country: 'Philippines').state_options.map(&:code).should include '00' }
+
+    # At the time of this writing, it doesn't look like Carmen has been updated to reflect the new 18
+    # regions of France.
+    it { Address.new(country: 'France').state_options.size.should eq 0 }
+    #it { Address.new(country: 'France').state_options.size.should eq 18 }
+    #it { Address.new(country: 'France').state_options.map(&:name).should include 'Auvergne-Rhône-Alpes' }
   end
 
   describe 'associations' do

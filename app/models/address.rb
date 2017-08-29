@@ -111,12 +111,20 @@ class Address < ActiveRecord::Base
     raise ArgumentError.new('expected a Carmen::Country') unless country.is_a? Carmen::Country
     Carmen::RegionCollection.new(
       if country.name == 'Kenya'
+        # https://github.com/jim/carmen/issues/227
         # https://en.wikipedia.org/wiki/Provinces_of_Kenya
         # Kenya's provinces were replaced by a system of counties in 2013.
         # https://en.wikipedia.org/wiki/ISO_3166-2:KE confirms that they are "former" provinces.
         # At the time of this writing, however, it doesn't look like Carmen has been updated to
         # include the 47 counties listed under https://en.wikipedia.org/wiki/ISO_3166-2:KE.
         country.subregions.typed('county')
+      elsif country.name == 'France'
+        # https://github.com/jim/carmen/issues/228
+        # https://en.wikipedia.org/wiki/Regions_of_France
+        # In 2016 what had been 27 regions was reduced to 18.
+        # France is divided into 18 administrative regions, including 13 metropolitan regions and 5 overseas regions.
+        # https://en.wikipedia.org/wiki/ISO_3166-2:FR
+        []
       elsif country.name == 'New Zealand' ||
             country.name == 'Philippines'
         country.subregions.map {|_| _.subregions.any? ? _.subregions : _ }.flatten
