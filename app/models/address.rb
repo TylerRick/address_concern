@@ -125,11 +125,8 @@ class Address < ActiveRecord::Base
         # France is divided into 18 administrative regions, including 13 metropolitan regions and 5 overseas regions.
         # https://en.wikipedia.org/wiki/ISO_3166-2:FR
         []
-      elsif country.name == 'New Zealand' ||
-            country.name == 'Philippines'
+      else # Needed for New Zealand, Philippines, Indonesia, and possibly others
         country.subregions.map {|_| _.subregions.any? ? _.subregions : _ }.flatten
-      else
-        country.subregions
       end
     )
   end

@@ -201,13 +201,21 @@ describe Address do
 
     # Auckland (AUK) is a subregion of the North Island (N) subregion
     it { Address.new(country: 'New Zealand').state_options.map(&:code).should include 'AUK' }
+    it { Address.new(country: 'New Zealand').state_options.map(&:code).should_not include 'N' }
     # Chatham Islands Territory (CIT) is a top-level region
     it { Address.new(country: 'New Zealand').state_options.map(&:code).should include 'CIT' }
 
     # Abra (ABR) is a subregion of the Cordillera Administrative Region (CAR) (15) subregion
     it { Address.new(country: 'Philippines').state_options.map(&:code).should include 'ABR' }
+    it { Address.new(country: 'Philippines').state_options.map(&:code).should_not include '15' }
     # National Capital Region (00) is a top-level region
     it { Address.new(country: 'Philippines').state_options.map(&:code).should include '00' }
+
+    # https://en.wikipedia.org/wiki/Provinces_of_Indonesia
+    #   The provinces are officially grouped into seven geographical units
+    # Jawa Barat (JB) is a subregion of the Jawa (JW) subregion
+    it { Address.new(country: 'Indonesia').state_options.map(&:code).should include 'JB' }
+    it { Address.new(country: 'Indonesia').state_options.map(&:code).should_not include 'JW' }
 
     # At the time of this writing, it doesn't look like Carmen has been updated to reflect the new 18
     # regions of France.
