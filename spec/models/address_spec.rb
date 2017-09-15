@@ -216,6 +216,11 @@ describe Address do
     # Jawa Barat (JB) is a subregion of the Jawa (JW) subregion
     it { Address.new(country: 'Indonesia').state_options.map(&:code).should include 'JB' }
     it { Address.new(country: 'Indonesia').state_options.map(&:code).should_not include 'JW' }
+    # The province is not called "Jakarta Raya" according to
+    # https://en.wikipedia.org/wiki/ISO_3166-2:ID and https://en.wikipedia.org/wiki/Jakarta — it's
+    # called 'DKI Jakarta', which is short for 'Daerah Khusus Ibukota Jakarta' ('Special Capital
+    # City District of Jakarta'),
+    it { Address.new(country: 'Indonesia').state_options.map(&:name).should include 'DKI Jakarta' }
 
     # At the time of this writing, it doesn't look like Carmen has been updated to reflect the new 18
     # regions of France.

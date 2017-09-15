@@ -172,7 +172,6 @@ class Address < ActiveRecord::Base
       'Netherlands',
       'New Zealand',
       'Poland',
-      'South Africa',
       'Sweden',
       'United Kingdom',
     ].include? country_name
