@@ -20,14 +20,14 @@ module AddressEngine
   module ClassMethods
     # Creates an +address+ association, representing the one and only address associated with the current record
     def has_address
-      has_one :address, :as => :addressable
+      has_one :address, as: :addressable
     end
 
     # Creates an +addresses+ association, representing all addresses associated with the current record
     def has_addresses(options = {})
-      has_many :addresses, :as => :addressable
+      has_many :addresses, as: :addressable
       (options[:types] || ()).each do |type|
-        has_one :"#{type}_address", :class_name => 'Address', :as => :addressable, :conditions => {:address_type => type}
+        has_one :"#{type}_address", -> { where({address_type: type}) }, class_name: 'Address', as: :addressable
       end
     end
   end

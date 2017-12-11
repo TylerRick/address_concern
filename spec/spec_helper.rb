@@ -11,7 +11,6 @@ $LOAD_PATH.unshift __DIR__ + '../lib'
 #---------------------------------------------------------------------------------------------------
 # ActiveRecord
 
-require 'address_engine/patch_arel_for_ruby_2.4'
 require 'active_record'
 
 log_file_path = __DIR__ + 'test.log'

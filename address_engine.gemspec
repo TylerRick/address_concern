@@ -8,15 +8,15 @@ Gem::Specification.new do |s|
   s.authors     = ["Paul Campbell", "Tyler Rick"]
   s.email       = ["paul@rslw.com", "github.com@tylerrick.com"]
   s.homepage    = %q{http://github.com/TylerRick/address_engine}
-  s.summary     = %q{A reusable Address model for your Rails 3 apps}
+  s.summary     = %q{A reusable Address model for your Rails 4 apps}
   s.description = s.summary
   s.licenses = ["MIT"]
 
   s.add_dependency "rake"
   s.add_dependency "cucumber"
-  s.add_dependency "rails", "~> 3.0"
-  s.add_dependency "activerecord", "~> 3.0"
-  s.add_dependency "activesupport", "~> 3.0"
+  s.add_dependency "rails", ">= 4.0"
+  s.add_dependency "activerecord", ">= 4.0"
+  s.add_dependency "activesupport", ">= 4.0"
   #s.add_dependency "carmen", '~> 1.0.3'
   s.add_dependency "attribute_normalizer"
   s.add_dependency "active_record_ignored_attributes"
