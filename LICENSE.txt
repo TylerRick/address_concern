@@ -1,5 +1,5 @@
 Copyright (c) 2011 Paul Campbell
-Copyright (c) 2011 Tyler Rick
+Copyright (c) 2011-2018 Tyler Rick
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the

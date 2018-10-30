@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.authors     = ["Paul Campbell", "Tyler Rick"]
   s.email       = ["paul@rslw.com", "github.com@tylerrick.com"]
   s.homepage    = %q{http://github.com/TylerRick/address_engine}
-  s.summary     = %q{A reusable Address model for your Rails 4 apps}
+  s.summary     = %q{A reusable Address model for your Rails apps}
   s.description = s.summary
   s.licenses = ["MIT"]
 

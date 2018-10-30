@@ -234,7 +234,7 @@ describe Address do
     #describe 'when we have a polymorphic belongs_to :addressable in Address' do
     #belongs_to :addressable, :polymorphic => true
 
-    describe 'has_one :address' do
+    describe 'Company has_one :address' do
       let(:company) { Company.create }
 
       it do
@@ -242,11 +242,12 @@ describe Address do
         address = company.build_address(address: '1')
         company.save!
         company.reload.address.should == address
+        address.addressable.should == company
       end
 
     end
 
-    describe 'has_many :addresses' do
+    describe 'User has_many :addresses' do
       let(:user) { User.create }
 
       it do
@@ -267,6 +268,41 @@ describe Address do
         user.shipping_address.should == shipping_address
         user.billing_address. should == billing_address
         user.addresses.to_set.should == [physical_address, shipping_address, billing_address, vacation_address].to_set
+        physical_address.addressable.should == user
+        shipping_address.addressable.should == user
+        billing_address .addressable.should == user
+      end
+    end
+
+    describe 'Employee belongs_to :home_address' do
+      subject!(:employee) { Employee.create! }
+
+      it do
+        employee.home_address.should == nil
+        employee.work_address.should == nil
+        home_address = employee.build_home_address(address: '1')
+        work_address = employee.build_work_address(address: '2')
+        employee.save!
+        employee.reload.home_address.should == home_address
+        employee.reload.work_address.should == work_address
+        home_address.employee_home.should == employee
+        work_address.employee_work.should == employee
+      end
+    end
+
+    describe 'Child belongs_to :secret_hideout' do
+      subject!(:child) { Child.create! }
+
+      it do
+        child.address.       should == nil
+        child.secret_hideout.should == nil
+        address        = child.build_address(address: '2')
+        secret_hideout = child.build_secret_hideout(address: '1')
+        child.save!
+        child.reload.address.       should == address
+        child.reload.secret_hideout.should == secret_hideout
+        address.       child.                   should == child
+        secret_hideout.child_for_secret_hideout.should == child
       end
     end
   end
