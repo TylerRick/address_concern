@@ -20,7 +20,7 @@ You now have an `Address` model that you can use in your app just as if it were 
 ## Base usage
 
 ```ruby
-class Person < ActiveRecord::Base
+class Person < ApplicationRecord
   belongs_to_address
 end
 
@@ -31,7 +31,7 @@ person.build_address(address: '...')
 ## Multiple addresses on same model
 
 ```ruby
-class User < ActiveRecord::Base
+class User < ApplicationRecord
   belongs_to_address :shipping_address
   belongs_to_address :billing_address
 end
@@ -55,7 +55,7 @@ the most sense for your use case.
 You can either use standard ActiveRecord association macros, like this:
 
 ```ruby
-class Person < ActiveRecord::Base
+class Person < ApplicationRecord
   belongs_to :address
 end
 ```
@@ -65,7 +65,7 @@ end
 ## `belongs_to_address`
 
 ```ruby
-class Person < ActiveRecord::Base
+class Person < ApplicationRecord
   belongs_to_address
 end
 
@@ -77,7 +77,7 @@ If needed, you can pass a name as well as options for the `belongs_to` and (opti
 associations.
 
 ```ruby
-class Child < ActiveRecord::Base
+class Child < ApplicationRecord
   belongs_to_address inverse: false
   belongs_to_address :secret_hideout, inverse: {name: :child_for_secret_hideout}
 end
@@ -91,7 +91,7 @@ child.build_secret_hideout(address: '...')
 `has_address` creates a `has_one :address` association:
 
 ```ruby
-class Company < ActiveRecord::Base
+class Company < ApplicationRecord
   has_address
 end
 ```
@@ -113,7 +113,7 @@ belongs_to :addressable, :polymorphic => true
 `has_addresses` creates a `has_many :addresses` association:
 
 ```ruby
-class User < ActiveRecord::Base
+class User < ApplicationRecord
   has_addresses
 end
 ```
@@ -122,7 +122,7 @@ If you want to have several *individually accessible* addresses associated with 
 as a separate shipping and billing address), you can do something like this:
 
 ```ruby
-class User < ActiveRecord::Base
+class User < ApplicationRecord
   has_addresses :types => [:physical, :shipping, :billing]
 end
 ```
