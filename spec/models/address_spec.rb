@@ -62,12 +62,6 @@ describe Address do
       address.country_name.should           == 'Congo, The Democratic Republic of the'
       address.country_name_from_code.should == 'Congo, The Democratic Republic of the'
     end; end
-
-    ['Macedonia', 'Republic of Macedonia'].each do |_| specify _ do
-      address.country = _
-      address.country_name.should           == 'Macedonia, Republic of'
-      address.country_name_from_code.should == 'Macedonia, Republic of'
-    end; end
   end
 
   describe 'started_filling_out?' do

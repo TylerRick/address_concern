@@ -1,4 +1,7 @@
-class Address < ApplicationRecord
+module AddressConcern
+extend ActiveSupport::Concern
+included do
+
   #validates_presence_of :name
   #validates_presence_of :address
   #validates_presence_of :state, :if => :state_required?
@@ -98,7 +101,7 @@ class Address < ApplicationRecord
     self.country = name
   end
 
-  #=================================================================================================
+  #════════════════════════════════════════════════════════════════════════════════════════════════════
   # State/province options for country
 
   # This is useful if want to list the state options allowed for a country in a select box and
@@ -213,7 +216,7 @@ class Address < ApplicationRecord
     carmen_state ? carmen_state.name : state
   end
 
-  #=================================================================================================
+  #════════════════════════════════════════════════════════════════════════════════════════════════════
 
   def empty?
     [:address, :city, :state, :postal_code, :country].all? {|_|
@@ -227,7 +230,7 @@ class Address < ApplicationRecord
     }
   end
 
-  #=================================================================================================
+  #════════════════════════════════════════════════════════════════════════════════════════════════════
   # Formatting for humans
 
   # Lines of a postal address
@@ -280,7 +283,7 @@ class Address < ApplicationRecord
     end
   end
 
-  #=================================================================================================
+  #════════════════════════════════════════════════════════════════════════════════════════════════════
   # Misc. output
 
   def parts
@@ -299,4 +302,5 @@ class Address < ApplicationRecord
   end
 
   #-------------------------------------------------------------------------------------------------
+end
 end
