@@ -6,7 +6,7 @@ Gem::Specification.new do |s|
   s.name        = "address_engine"
   s.version     = AddressEngine.version
   s.authors     = ["Paul Campbell", "Tyler Rick"]
-  s.email       = ["paul@rslw.com", "github.com@tylerrick.com"]
+  s.email       = ["paul@rslw.com", "tyler@tylerrick.com"]
   s.homepage    = %q{http://github.com/TylerRick/address_engine}
   s.summary     = %q{A reusable Address model for your Rails apps}
   s.description = s.summary
@@ -17,7 +17,7 @@ Gem::Specification.new do |s|
   s.add_dependency "rails", ">= 4.0"
   s.add_dependency "activerecord", ">= 4.0"
   s.add_dependency "activesupport", ">= 4.0"
-  s.add_dependency "carmen", '~> 1.1.1'
+  s.add_dependency "carmen", '>= 1.1.1'
   s.add_dependency "attribute_normalizer"
   s.add_dependency "active_record_ignored_attributes"
   s.add_dependency "facets"

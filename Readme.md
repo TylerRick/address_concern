@@ -1,6 +1,6 @@
-# Address Engine
+# Address Concern
 
-A reusable polymorphic `Address` model for your Rails apps.
+A reusable polymorphic `Address` model concern for your Rails apps.
 
 # Installation
 
@@ -18,6 +18,14 @@ You now have an `Address` model that you can use in your app just as if it were 
 # Usage
 
 ## Base usage
+
+```ruby
+class Address < ApplicationRecord
+  include AddressConcern
+end
+```
+
+## `belongs_to_address`
 
 ```ruby
 class Person < ApplicationRecord

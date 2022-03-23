@@ -5,3 +5,4 @@ pkg/*
 spec/test.log
 .byebug_history
 Gemfile.lock
+tmp/
