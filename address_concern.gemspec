@@ -1,13 +1,13 @@
 # -*- encoding: utf-8 -*-
 $:.push File.expand_path("../lib", __FILE__)
-require "address_engine/version"
+require "address_concern/version"
 
 Gem::Specification.new do |s|
-  s.name        = "address_engine"
-  s.version     = AddressEngine.version
+  s.name        = "address_concern"
+  s.version     = AddressConcern.version
   s.authors     = ["Paul Campbell", "Tyler Rick"]
   s.email       = ["paul@rslw.com", "tyler@tylerrick.com"]
-  s.homepage    = %q{http://github.com/TylerRick/address_engine}
+  s.homepage    = %q{http://github.com/TylerRick/address_concern}
   s.summary     = %q{A reusable Address model for your Rails apps}
   s.description = s.summary
   s.licenses = ["MIT"]
@@ -28,6 +28,6 @@ Gem::Specification.new do |s|
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
-  s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
+  #s.executables   = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   s.require_paths = ["lib"]
 end

@@ -1,4 +1,4 @@
-module AddressEngine
+module AddressConcern
   def self.version
     "1.2.0"
   end

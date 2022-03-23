@@ -1,3 +1,3 @@
 class Address < ApplicationRecord
-  include AddressConcern
+  include AddressConcern::Address
 end

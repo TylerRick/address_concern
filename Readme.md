@@ -4,28 +4,29 @@ A reusable polymorphic `Address` model concern for your Rails apps.
 
 # Installation
 
-Add `address_engine` to your `Gemfile`:
+Add `address_concern` to your `Gemfile`:
 
-    gem 'address_engine'
+    gem 'address_concern'
 
-Then run the generator to create your addresses table:
-
-    rails generate address_engine:install
-    rake db:migrate
-
-You now have an `Address` model that you can use in your app just as if it were in your `app/models` directory.
-
-# Usage
-
-## Base usage
+Include the `AddressConcern::Address` concern in your model:
 
 ```ruby
 class Address < ApplicationRecord
-  include AddressConcern
+  include AddressConcern::Address
 end
 ```
 
+Then run the generator to create your addresses table:
+
+    rails generate address_concern:install
+    rake db:migrate
+
+# Usage
+
 ## `belongs_to_address`
+
+`AddressConcern::AddressAssociations` is automatically included into `ActiveRecord::Base` and
+provides a few macros for defining associations with your app's Address model.
 
 ```ruby
 class Person < ApplicationRecord

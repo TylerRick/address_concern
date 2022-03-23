@@ -1,15 +1,4 @@
-require 'rails'
-require 'carmen'
-require 'active_record'
-require 'active_record_ignored_attributes'
-
-require 'address_engine/version'
-require 'address_engine/attribute_normalizer'
-require_relative '../app/models/address_concern'
-
-Carmen.i18n_backend.append_locale_path File.join(File.dirname(__FILE__), '../config/locale/overlay/en')
-
-module AddressEngine
+module AddressConcern::AddressAssociations
   extend ActiveSupport::Concern
   module ClassMethods
     # Creates a belongs_to +address+ association, named "address" by default but a different name may be
@@ -73,5 +62,5 @@ module AddressEngine
 end
 
 ActiveRecord::Base.class_eval do
-  include AddressEngine
+  include AddressConcern::AddressAssociations
 end

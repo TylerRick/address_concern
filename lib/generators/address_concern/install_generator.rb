@@ -1,5 +1,5 @@
 require 'rails/generators'
-module AddressEngine
+module AddressConcern
   class InstallGenerator < Rails::Generators::Base
     include Rails::Generators::Migration
 

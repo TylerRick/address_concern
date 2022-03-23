@@ -10,7 +10,7 @@ end
 desc "Start a console with this version of library loaded"
 task :console do
   require 'bundler/setup'
-  require 'address_engine'
+  require 'address_concern'
   require 'irb'
   ARGV.clear
   IRB.start

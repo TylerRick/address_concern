@@ -22,7 +22,7 @@ database_config = YAML::load(File.open(__DIR__ + "support/database.#{driver}.yml
 ActiveRecord::Base.establish_connection(database_config)
 
 require __DIR__ + 'support/schema'
-require 'generators/address_engine/templates/migration'
+require 'generators/address_concern/templates/migration'
 CreateAddresses.up
 
 #---------------------------------------------------------------------------------------------------
@@ -39,7 +39,7 @@ RSpec.configure do |config|
   config.example_status_persistence_file_path = "tmp/rspec_status.txt"
 end
 
-require 'address_engine'
+require 'address_concern'
 
 require_relative 'support/models/application_record'
 require_relative 'support/models/address'
