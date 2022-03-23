@@ -13,7 +13,6 @@ Gem::Specification.new do |s|
   s.licenses = ["MIT"]
 
   s.add_dependency "rake"
-  s.add_dependency "cucumber"
   s.add_dependency "rails", ">= 4.0"
   s.add_dependency "activerecord", ">= 4.0"
   s.add_dependency "activesupport", ">= 4.0"
