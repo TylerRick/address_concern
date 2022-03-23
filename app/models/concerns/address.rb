@@ -1,7 +1,22 @@
 module AddressConcern::Address
+  module Base
+    extend ActiveSupport::Concern
+
+    module ClassMethods
+      def acts_as_address(**options)
+        @acts_as_address_opts = options
+
+        include ::AddressConcern::Address
+      end
+
+      def belongs_to_addressable(**options)
+        belongs_to :addressable, polymorphic: true, touch: true, optional: true, **options
+      end
+    end
+  end
+
   extend ActiveSupport::Concern
   included do
-
     #validates_presence_of :name
     #validates_presence_of :address
     #validates_presence_of :state, :if => :state_required?
@@ -303,4 +318,8 @@ module AddressConcern::Address
 
     #-------------------------------------------------------------------------------------------------
   end
+end
+
+ActiveRecord::Base.class_eval do
+  include AddressConcern::Address::Base
 end

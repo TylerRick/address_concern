@@ -1,3 +1,4 @@
+# Comparable to the ActsAsAddressable concern of effective_addresses.
 module AddressConcern::AddressAssociations
   extend ActiveSupport::Concern
   module ClassMethods
@@ -10,6 +11,7 @@ module AddressConcern::AddressAssociations
     # You can also pass options to the inverse has_one assocation in the Address model, via the
     # +inverse+ option:
     #   belongs_to_address :home_address, inverse: {foreign_key: :physical_address_id}
+    #
     def belongs_to_address(name = :address, inverse: nil, **options)
       options.reverse_merge!({
         class_name: 'Address'
@@ -37,26 +39,32 @@ module AddressConcern::AddressAssociations
     end
 
     # Creates a has_one +address+ association, representing the one and only address associated with the current record
+    #
+    # TODO: Let individual address names/types be defined, like has_address :billing. For now, have to use
+    # has_addresses and define them all at once.
+    #
     def has_address
       has_one :address, as: :addressable
-      create_addressable_association_on_address
+      create_addressable_association_on_address_if_needed
     end
 
     # Creates a has_many +addresses+ association, representing all addresses associated with the current record
+    #
+    # Comparable to acts_as_addressable from effective_addresses.
+    #
     def has_addresses(options = {})
       has_many :addresses, as: :addressable
       (options[:types] || ()).each do |type|
         has_one :"#{type}_address", -> { where({address_type: type}) }, class_name: 'Address', as: :addressable
       end
-      create_addressable_association_on_address
+      create_addressable_association_on_address_if_needed
     end
 
-    def create_addressable_association_on_address
+    def create_addressable_association_on_address_if_needed(**options)
       Address.class_eval do
-        unless reflect_on_association(:addressable)
-          belongs_to :addressable, :polymorphic => true
-        end
+        return if reflect_on_association(:addressable)
       end
+      Address.belongs_to_addressable(**options)
     end
   end
 end
