@@ -1,4 +1,4 @@
 class Address < ApplicationRecord
-  # include AddressConcern::Address
+  normalize_attributes :name
   acts_as_address
 end
