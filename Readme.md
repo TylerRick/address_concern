@@ -6,9 +6,11 @@ A reusable polymorphic `Address` model concern for your Rails apps.
 
 Add `address_concern` to your `Gemfile`:
 
-    gem 'address_concern'
+```ruby
+gem 'address_concern'
+```
 
-Include the `AddressConcern::Address` concern in your model:
+Include the `AddressConcern::Address` concern in your app's `Address` model:
 
 ```ruby
 class Address < ApplicationRecord
@@ -16,10 +18,46 @@ class Address < ApplicationRecord
 end
 ```
 
+Or use the provided macro:
+```ruby
+class Address < ApplicationRecord
+  acts_as_address
+end
+```
+
 Then run the generator to create your addresses table:
 
     rails generate address_concern:install
-    rake db:migrate
+    rails db:migrate
+
+You can modify the migration and add any other fields you may wish to include.
+
+For country and state/providence, you may choose to store both the code and name or just code or
+just name. Remove from the migration the columns you don't need.
+
+By default, it will store country name in `country_name` or `country` if one of those columns exist,
+and store country code in `country_code` or `country` if one of those columns exist. If _only_ a
+`country` column exists, it will be used to store the name attribute by default.
+
+By default, it will store state name in `state_name` or `state` if one of those columns exist,
+and store state code in `state_code` or `state` if one of those columns exist. If _only_ a
+`state` column exists, it will be used to store the name attribute by default.
+
+These column names can be configured. For example, to store country code in `country` and state code
+in `state`, you could do:
+
+```ruby
+class Address < ApplicationRecord
+  acts_as_address(
+    country: {
+      code_attribute: :country,
+    },
+    state: {
+      code_attribute: :state,
+    },
+  )
+end
+```
 
 # Usage
 
@@ -111,10 +149,19 @@ address = company.build_address(address: '...')
 ```
 
 This also adds a polymorphic `addressable` association on the Address model (not available if you're
-using `belongs_to :address` on your addressable models):
+using `belongs_to_address` on your addressable models instead of `has_address`):
 
 ```ruby
-belongs_to :addressable, :polymorphic => true
+  belongs_to :addressable, polymorphic: true, touch: true, optional: true
+```
+
+If you wish to customize that `belongs_to`, you can pass in any options you like:
+```ruby
+class Address < ApplicationRecord
+  include AddressConcern::Address
+
+  belongs_to_addressable options…
+end
 ```
 
 ## `has_addresses`
@@ -151,6 +198,32 @@ Note that you aren't *limited* to only the address types you specifically list i
 vacation_address = user.addresses.build(address: 'Vacation', :address_type => 'Vacation')
 user.addresses # => [shipping_address, vacation_address]
 ```
+
+## Street address
+
+You are free to either store the street address in a single column like this:
+
+```ruby
+  create_table :addresses do |t|
+    …
+    t.text     :address
+    …
+```
+
+or in separate columns like this:
+
+```ruby
+  create_table :addresses do |t|
+    …
+    t.string   :address_1
+    t.string   :address_2
+    t.string   :address_3
+    …
+```
+
+If you store it in a single column of type text, then it will support multi-line addresses stored in
+that single column. Calling `address.address_lines`, for example, will return an array of address
+lines — however many lines the user entered (you may add validations to limit this as you wish).
 
 # Country/state database
 

@@ -18,9 +18,8 @@ Gem::Specification.new do |s|
   s.add_dependency "activesupport", ">= 4.0"
   s.add_dependency "carmen", '>= 1.1.1'
   s.add_dependency "attribute_normalizer"
-  s.add_dependency "active_record_ignored_attributes"
-  s.add_dependency "facets"
 
+  s.add_development_dependency 'active_record_ignored_attributes' # for be_same_as
   s.add_development_dependency 'rspec'
   s.add_development_dependency 'sqlite3'
   #s.add_development_dependency 'mysql2', '~>0.2.11'

@@ -1,10 +1,68 @@
+require_relative '../../../lib/core_extensions/hash/reorder'
+using Hash::Reorder
+
+require_relative '../../../lib/core_extensions/string/cleanlines'
+using String::Cleanlines
+
 module AddressConcern::Address
   module Base
     extend ActiveSupport::Concern
 
+    # These (Base) class methods are added to ActiveRecord::Base so that they will be available from _any_
+    # model class. Unlike the main AddressConcern::Address methods which are only included _after_
+    # you call acts_as_address on a model.
     module ClassMethods
+      attr_reader :acts_as_address_config
       def acts_as_address(**options)
-        @acts_as_address_opts = options
+        # Have to use yield_self(&not_null) intead of presence because NullColumn.present? => true.
+        not_null = ->(column) {
+          column.type.nil? ? nil : column
+        }
+        options = options.deep_symbolize_keys
+        default_config = {
+          state: {
+            validate: false,
+
+            code_attribute: column_for_attribute(:state_code).yield_self(&not_null)&.name ||
+                           (column_for_attribute(:state).yield_self(&not_null)&.name unless options.dig(:state, :name_attribute).to_s == 'state'),
+
+            name_attribute: column_for_attribute(:state_name).yield_self(&not_null)&.name ||
+                           (column_for_attribute(:state).yield_self(&not_null)&.name unless options.dig(:state, :code_attribute).to_s == 'state'),
+
+            on_unknown: ->(value, name_or_code) { },
+          },
+          country: {
+            validate: false,
+
+
+            # By default, code (same as alpha_2_code) will be used
+            carmen_code: :code, # or alpha_2_code, alpha_3_code, :numeric_code
+
+            code_attribute: column_for_attribute(:country_code).yield_self(&not_null)&.name ||
+                           (column_for_attribute(:country).yield_self(&not_null)&.name unless options.dig(:country, :name_attribute).to_s == 'country'),
+
+            name_attribute: column_for_attribute(:country_name).yield_self(&not_null)&.name ||
+                           (column_for_attribute(:country).yield_self(&not_null)&.name unless options.dig(:country, :code_attribute).to_s == 'country'),
+
+            on_unknown: ->(value, name_or_code) { },
+          },
+          address: {
+            validate: false,
+            # Try to auto-detect address columns
+            attributes: column_names.grep(/address$|^address_\d$/),
+          }
+        }
+        @acts_as_address_config = config = {
+          **default_config
+        }.deep_merge(options)
+
+        [:state, :country].each do |group|
+          # Can't use the same column for code and name, so if it would be the same (by default or
+          # otherwise), let it be used for name only instead.
+          if config[group][:code_attribute] == config[group][:name_attribute]
+            config[group].delete(:code_attribute)
+          end
+        end
 
         include ::AddressConcern::Address
       end
@@ -15,82 +73,232 @@ module AddressConcern::Address
     end
   end
 
+  include ::InspectBase
+
   extend ActiveSupport::Concern
   included do
-    #validates_presence_of :name
+    #═══════════════════════════════════════════════════════════════════════════════════════════════
+    # Config
+
+    delegate *[
+      :acts_as_address_config,
+      :country_config,
+      :state_config,
+    ], to: 'self.class'
+
+    class << self
+      #─────────────────────────────────────────────────────────────────────────────────────────────
+      def country_config
+        @acts_as_address_config[:country] || {}
+      end
+
+      # usually :code
+      def carmen_country_code
+        country_config[:carmen_code]
+      end
+
+      # usually :coded
+      def carmen_country_code_find_method
+        :"#{carmen_country_code}d"
+      end
+
+      # 'country' or similar
+      def country_name_attribute
+        country_config[:name_attribute]&.to_sym
+      end
+
+      def country_code_attribute
+        country_config[:code_attribute]&.to_sym
+      end
+
+      #─────────────────────────────────────────────────────────────────────────────────────────────
+
+      def state_config
+        @acts_as_address_config[:state] || {}
+      end
+
+      def carmen_state_code
+        state_config[:carmen_code]
+      end
+
+      def state_name_attribute
+        state_config[:name_attribute]&.to_sym
+      end
+
+      def state_code_attribute
+        state_config[:code_attribute]&.to_sym
+      end
+
+      #─────────────────────────────────────────────────────────────────────────────────────────────
+
+      def address_attr_config
+        @acts_as_address_config[:address] || {}
+      end
+
+      def address_attributes
+        Array(address_attr_config[:attributes]).map(&:to_sym)
+      end
+
+      # Address line 1
+      def address_attribute
+        address_attributes[0]
+      end
+
+      def multi_line_address?
+        address_attributes.size == 1 && (
+          column = column_for_attribute(address_attribute)
+          column.type == :text
+        )
+      end
+
+      #─────────────────────────────────────────────────────────────────────────────────────────────
+
+      def configured_address_attributes
+        [
+          *address_attributes,
+          :city,
+          state_name_attribute,
+          state_code_attribute,
+          :postal_code,
+          country_name_attribute,
+          country_code_attribute,
+        ].compact.uniq
+      end
+    end
+
+    #═════════════════════════════════════════════════════════════════════════════════════════════════
     #validates_presence_of :address
-    #validates_presence_of :state, :if => :state_required?
+    #validates_presence_of :state, if: :state_required?
     #validates_presence_of :country
-    #validates_format_of :phone, :with => /^[0-9\-\+ ]*$/
-    #validates_format_of :email, :with => /^[^@]*@.*\.[^\.]*$/, :message => 'is invalid. Please enter an address in the format of you@company.com'
-    #validates_presence_of :phone, :message => ' is required.'
 
-    #-------------------------------------------------------------------------------------------------
-    normalize_attributes :name, :city, :state, :postal_code, :country
-    normalize_attribute  :address, :with => [:cleanlines, :strip]
+    #═════════════════════════════════════════════════════════════════════════════════════════════════
+    def _assign_attributes(attributes)
+      attributes = attributes.symbolize_keys
+      attributes = reorder_language_attributes(attributes)
+      super(attributes)
+    end
 
-    #-------------------------------------------------------------------------------------------------
-    # Country code
+    def self.country_aliases ; [:country_name, :country_code] ; end
+    def self.state_aliases   ; [:state_name,   :state_code]   ; end
 
-    def country_alpha2=(code)
-      if code.blank?
-        write_attribute(:country, nil)
-        write_attribute(:country_alpha2, nil)
-        write_attribute(:country_alpha3, nil)
+    # country needs to be assigned _before_ state for things to work as intended (can't look up
+    # state in state= unless we know which country it is for)
+    def reorder_language_attributes(attributes)
+      attributes.reorder(self.class.country_name_attribute,  self.class.country_code_attribute, *self.class.country_aliases,
+                         self.class.  state_name_attribute,  self.class.  state_code_attribute, *self.class.state_aliases)
+    end
 
-      elsif (country = Carmen::Country.alpha_2_coded(code))
-        # Only set it if it's a recognized country code
-        write_attribute(:country, country.name)
-        write_attribute(:country_alpha2, code)
+    #═════════════════════════════════════════════════════════════════════════════════════════════════
+    normalize_attributes :city, :state, :postal_code, :country
+    normalize_attribute  *address_attributes, with: [:cleanlines, :strip]
+
+    #═════════════════════════════════════════════════════════════════════════════════════════════════
+    # Country & State (Carmen + custom)
+
+    # Some of these methods look up by either name or code
+
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # find country
+
+    # Finds by name, falling back to finding by code.
+    def self.find_carmen_country(name)
+      return name if name.is_a? Carmen::Country
+
+      (
+        find_carmen_country_by_name(name) ||
+        find_carmen_country_by_code(name)
+      )
+    end
+    def self.find_carmen_country!(name)
+      find_carmen_country(name) or
+        raise "country #{name} not found"
+    end
+
+    def self.find_carmen_country_by_name(name)
+      name = recognize_country_name_alias(name)
+      Carmen::Country.named(name)
+    end
+
+    def self.find_carmen_country_by_code(code)
+      # Carmen::Country.coded(code)
+      Carmen::Country.send(carmen_country_code_find_method, code)
+    end
+
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # find state
+
+    # Finds by name, falling back to finding by code.
+    def self.find_carmen_state(country_name, name)
+      return name if name.is_a? Carmen::Region
+
+      country = find_carmen_country!(country_name)
+      states = states_for_country(country)
+      (
+        states.named(name) ||
+        states.coded(name)
+      )
+    end
+    def self.find_carmen_state!(country_name, name)
+      find_carmen_state(country_name, name) or
+        raise "state #{name} not found for country #{country_name}"
+    end
+
+    def self.find_carmen_state_by_name(country_name, name)
+      country = find_carmen_country!(country_name)
+      states = states_for_country(country)
+      states.named(name)
+    end
+
+    def self.find_carmen_state_by_code(country_name, code)
+      country = find_carmen_country!(country_name)
+      states = states_for_country(country)
+      states.coded(code)
+    end
+
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # country
+
+    # Calls country.code
+    _ = def self.carmen_country_code_for(country)
+      country.send(carmen_country_code)
+    end
+    delegate _, to: 'self.class'
+
+    # If you are storing both a country_name and country_code...
+    # This _should_ be the same as the value stored in the country attribute, but allows you to
+    # look it up just to make sure they match (or to update country field to match this).
+    def country_name_from_code
+      if (country = self.class.find_carmen_country_by_code(country_code))
+        country.name
+      end
+    end
+    def country_code_from_name
+      if (country = self.class.find_carmen_country_by_name(country_name))
+        self.class.carmen_country_code_for(country)
       end
     end
 
-    # Aliases
-    def country_code
-      country_alpha2
-    end
-    def country_code=(code)
-      self.country_alpha2 = code
-    end
-    def state_code
-      state
-    end
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # state
 
-    def carmen_country
-      Carmen::Country.alpha_2_coded(country_alpha2)
+    def state_name_from_code
+      if carmen_country && (state = self.class.find_carmen_state_by_code(carmen_country, state_code))
+        state.name
+      end
     end
-
-    def carmen_state
-      if (country = carmen_country)
-        Address.states_for_country(country).coded(state_code)
+    def state_code_from_name
+      if carmen_country && (state = self.class.find_carmen_state_by_name(carmen_country, state_name))
+        state.code
       end
     end
 
-    #-------------------------------------------------------------------------------------------------
-    # Country name
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # country
 
-    def country=(name)
-      if name.blank?
-        write_attribute(:country, nil)
-        write_attribute(:country_alpha2, nil)
-        write_attribute(:country_alpha3, nil)
-      else
-        name = recognize_country_name_alias(name)
-        if (country = Carmen::Country.named(name))
-          write_attribute(:country,        country.name)
-          write_attribute(:country_alpha2, country.alpha_2_code)
-          write_attribute(:country_alpha3, country.alpha_3_code)
-        else
-          write_attribute(:country, nil)
-          write_attribute(:country_alpha2, nil)
-          write_attribute(:country_alpha3, nil)
-        end
-      end
-    end
-
-    def recognize_country_name_alias(name)
+    def self.recognize_country_name_alias(name)
       name = case name
       when 'USA'
+        'United States'
       when 'The Democratic Republic of the Congo', 'Democratic Republic of the Congo'
         'Congo, the Democratic Republic of the'
       when 'Republic of Macedonia', 'Macedonia, Republic of', 'Macedonia'
@@ -100,20 +308,176 @@ module AddressConcern::Address
       end
     end
 
-    # This should not be different from the value stored in the country attribute, but allows you to
-    # look it up just to make sure they match (or to update country field to match this).
-    def country_name_from_code
-      if (country = Carmen::Country.alpha_2_coded(country_alpha2))
-        country.name
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+
+    scope :in_country, ->(country_name) {
+      country = find_carmen_country!(country_name)
+      where(addresses: { country_code: country&.code })
+    }
+    scope :in_state, ->(country_name, name) {
+      country = find_carmen_country!(country_name)
+      state   = find_carmen_state!(country_name, name)
+      where(addresses: { country_code: country&.code, state_code: state&.code })
+    }
+
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+
+    def carmen_country
+      self.class.find_carmen_country_by_code(country_code)
+    end
+
+    def carmen_state
+      if (country = carmen_country)
+        # country.subregions.coded(state_code)
+        self.class.states_for_country(country).coded(state_code)
       end
     end
 
-    # Aliases
-    def country_name
-      country
+    #═════════════════════════════════════════════════════════════════════════════════════════════════
+    # country attribute(s)
+
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # setters
+
+
+    def clear_country
+      write_attribute(self.class.country_name_attribute, nil) if self.class.country_name_attribute
+      write_attribute(self.class.country_code_attribute, nil) if self.class.country_code_attribute
     end
-    def country_name=(name)
-      self.country = name
+
+    def set_country_from_carmen_country(country)
+      write_attribute(self.class.country_name_attribute, country.name                    ) if self.class.country_name_attribute
+      write_attribute(self.class.country_code_attribute, carmen_country_code_for(country)) if self.class.country_code_attribute
+    end
+
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # code=
+
+    # def country_code=(code)
+    define_method :"#{country_code_attribute || 'country_code'}=" do |value|
+      if value.blank?
+        clear_country
+      else
+        if (country = self.class.find_carmen_country_by_code(value))
+          set_country_from_carmen_country(country)
+        else
+          country_config[:on_unknown].(value, :code)
+          write_attribute(self.class.country_code_attribute, value) if self.class.country_code_attribute
+        end
+      end
+    end
+
+    # Attribute alias
+    if country_code_attribute
+      unless :country_code == country_code_attribute
+        alias_attribute :country_code, :"#{country_code_attribute}"
+        #alias_method :country_code=, :"#{country_code_attribute}="
+      end
+    else
+      alias_method :country_code, :country_code_from_name
+    end
+
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # name=
+
+    # def country_name=(name)
+    define_method :"#{country_name_attribute || 'country_name'}=" do |value|
+      if value.blank?
+        clear_country
+      else
+        if (country = self.class.find_carmen_country_by_name(value))
+          set_country_from_carmen_country(country)
+        else
+          country_config[:on_unknown].(value, :name)
+          write_attribute(self.class.country_name_attribute, value) if self.class.country_name_attribute
+        end
+      end
+    end
+
+    # Attribute alias
+    if country_name_attribute
+      unless :country_name == country_name_attribute
+        alias_attribute :country_name, country_name_attribute
+        #alias_method :country_name=, :"#{country_name_attribute}="
+      end
+    else
+      alias_method :country_name, :country_name_from_code
+    end
+
+    #════════════════════════════════════════════════════════════════════════════════════════════════════
+    # state attribute(s)
+    # (This is nearly identical to country section above with s/country/state/)
+
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # setters
+
+
+    def clear_state
+      write_attribute(self.class.state_name_attribute, nil) if self.class.state_name_attribute
+      write_attribute(self.class.state_code_attribute, nil) if self.class.state_code_attribute
+    end
+
+    def set_state_from_carmen_state(state)
+      write_attribute(self.class.state_name_attribute, state.name) if self.class.state_name_attribute
+      write_attribute(self.class.state_code_attribute, state.code) if self.class.state_code_attribute
+    end
+
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # code=
+
+    # def state_code=(code)
+    define_method :"#{state_code_attribute || 'state_code'}=" do |value|
+      if value.blank?
+        clear_state
+      else
+        if carmen_country && (state = self.class.find_carmen_state_by_code(carmen_country, value))
+          set_state_from_carmen_state(state)
+        else
+          #puts carmen_country ? "unknown state code '#{value}'" : "can't find state without country"
+          state_config[:on_unknown].(value, :code)
+          write_attribute(self.class.state_code_attribute, value) if self.class.state_code_attribute
+        end
+      end
+    end
+
+    # Attribute alias
+    if state_code_attribute
+      unless :state_code == state_code_attribute
+        alias_attribute :state_code, :"#{state_code_attribute}"
+        #alias_method :state_code=, :"#{state_code_attribute}="
+      end
+    else
+      alias_method :state_code, :state_code_from_name
+    end
+
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # name=
+
+    # def state_name=(name)
+    # Uses find_carmen_state so if your column was named 'state', you could actually do state = name
+    # or code.
+    define_method :"#{state_name_attribute || 'state_name'}=" do |value|
+      if value.blank?
+        clear_state
+      else
+        if carmen_country && (state = self.class.find_carmen_state(carmen_country, value))
+          set_state_from_carmen_state(state)
+        else
+          #puts carmen_country ? "unknown state name '#{name}'" : "can't find state without country"
+          state_config[:on_unknown].(value, :name)
+          write_attribute(self.class.state_name_attribute, value) if self.class.state_name_attribute
+        end
+      end
+    end
+
+    # Attribute alias
+    if state_name_attribute
+      unless :state_name == state_name_attribute
+        alias_attribute :state_name, state_name_attribute
+        #alias_method :state_name=, :"#{state_name_attribute}="
+      end
+    else
+      alias_method :state_name, :state_name_from_code
     end
 
     #════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -227,22 +591,38 @@ module AddressConcern::Address
       end
     end
 
-    def state_name
-      carmen_state ? carmen_state.name : state
-    end
-
     #════════════════════════════════════════════════════════════════════════════════════════════════════
 
     def empty?
-      [:address, :city, :state, :postal_code, :country].all? {|_|
+      self.class.configured_address_attributes.all? {|_|
         !self[_].present?
       }
     end
 
     def started_filling_out?
-      [:address, :city, :state, :postal_code, :country].any? {|_|
+      self.class.configured_address_attributes.any? {|_|
         self[_].present?
       }
+    end
+
+    #════════════════════════════════════════════════════════════════════════════════════════════════════
+    # Street address / Address lines
+
+    # Attribute alias for street address line 1
+    #if address_attribute
+    #  unless :address == address_attribute
+    #    alias_attribute :address, :"#{address_attribute}"
+    #  end
+    #end
+
+    def address_lines
+      if self.class.multi_line_address?
+        address.to_s.cleanlines.to_a
+      else
+        self.class.address_attributes.map do |attr_name|
+          send attr_name
+        end
+      end
     end
 
     #════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -251,11 +631,11 @@ module AddressConcern::Address
     # Lines of a postal address
     def lines
       [
-        name,
-        address.to_s.lines.to_a,
+        #name,
+        *address_lines,
         city_line,
         country_name,
-      ].flatten.reject(&:blank?)
+      ].reject(&:blank?)
     end
 
     # Used by #lines
@@ -263,7 +643,7 @@ module AddressConcern::Address
     # Instead of using `state` method (which is really state_code). That's fine for some countries
     # like US, Canada, Australia but not other countries (presumably).
     #
-    # TODO: Put postal code and city in a different order, as that countries conventions dictate.
+    # TODO: Put postal code and city in a different order, as that country's conventions dictate.
     # See http://bitboost.com/ref/international-address-formats/new-zealand/
     #
     def city_line
@@ -275,7 +655,7 @@ module AddressConcern::Address
     end
 
     def city_state_code
-      [city, state].reject(&:blank?).join(', ')
+      [city, state_code].reject(&:blank?).join(', ')
     end
 
     def city_state_name
@@ -303,20 +683,29 @@ module AddressConcern::Address
 
     def parts
       [
-        name,
-        address.to_s.lines.to_a,
+        #name,
+        *address_lines,
         city,
         state_name,
         postal_code,
         country_name,
-      ].flatten.reject(&:blank?)
+      ].reject(&:blank?)
     end
 
     def inspect
-      inspect_with([:id, :name, :address, :city, :state, :postal_code, :country], ['{', '}'])
+      inspect_base(
+        :id,
+        #:name,
+        :address,
+        # address_2 ...
+        :city,
+        :state,
+        :postal_code,
+        :country,
+      )
     end
 
-    #-------------------------------------------------------------------------------------------------
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
   end
 end
 

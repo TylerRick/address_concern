@@ -1,3 +1,8 @@
 class User < ApplicationRecord
-  has_addresses :types => [:physical, :shipping, :billing]
+  # Could also do:
+  #   has_addresses [:physical, :shipping, :billing]
+  has_addresses
+  has_address :physical
+  has_address :shipping
+  has_address :billing
 end
