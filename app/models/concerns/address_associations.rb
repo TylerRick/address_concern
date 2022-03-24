@@ -38,24 +38,37 @@ module AddressConcern::AddressAssociations
       end
     end
 
-    # Creates a has_one +address+ association, representing the one and only address associated with the current record
+    # Creates a has_one +address+ association. If you don't give a name, it will just be called
+    # "address", which can be used if this record only needs to be associated with a single address.
     #
-    # TODO: Let individual address names/types be defined, like has_address :billing. For now, have to use
-    # has_addresses and define them all at once.
+    # If you need it to be associated with multiple address records, pass the name/type of each. For
+    # example:
     #
-    def has_address
-      has_one :address, as: :addressable
+    #   has_address :billing
+    #
+    def has_address(type = nil)
+      has_one address_name_for_type(type), -> { where({address_type: type}) }, class_name: 'Address', as: :addressable
       create_addressable_association_on_address_if_needed
+    end
+
+    def address_name_for_type(type)
+      if type
+        :"#{type}_address"
+      else
+        :address
+      end
     end
 
     # Creates a has_many +addresses+ association, representing all addresses associated with the current record
     #
+    # If +types+ is given, adds a has_address(type) association for each type.
+    #
     # Comparable to acts_as_addressable from effective_addresses.
     #
-    def has_addresses(options = {})
+    def has_addresses(types = [])
       has_many :addresses, as: :addressable
-      (options[:types] || ()).each do |type|
-        has_one :"#{type}_address", -> { where({address_type: type}) }, class_name: 'Address', as: :addressable
+      (types || []).each do |type|
+        has_address(type)
       end
       create_addressable_association_on_address_if_needed
     end

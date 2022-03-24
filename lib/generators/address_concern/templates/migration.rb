@@ -4,16 +4,20 @@ class CreateAddresses < ActiveRecord::Migration[4.2]
       t.references :addressable, :polymorphic => true
       t.string   :address_type   # to allow shipping/billing/etc. address
 
-      t.string   :name
       t.text     :address
       t.string   :city
+      t.string   :state_code
       t.string   :state
       t.string   :postal_code
+      t.string   :country_code
       t.string   :country
-      t.string   :country_alpha2
-      t.string   :country_alpha3
-      t.string   :email
-      t.string   :phone
+
+      # You could add other columns, such as these, but they are arguably not technically part of an
+      # address. In any case, they are outside the scope of this library.
+      #t.string   :name
+      #t.string   :email
+      #t.string   :phone
+
       t.timestamps
     end
 
@@ -21,13 +25,13 @@ class CreateAddresses < ActiveRecord::Migration[4.2]
       t.index  :addressable_id
       t.index  :addressable_type
       t.index  :address_type
-      t.index  :name
+
+      #t.index  :city
+      t.index  :state_code
       t.index  :state
+      #t.index  :postal_code
+      t.index  :country_code
       t.index  :country
-      t.index  :country_alpha2
-      t.index  :country_alpha3
-      t.index  :email
-      t.index  :phone
     end
   end
 

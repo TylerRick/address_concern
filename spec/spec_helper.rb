@@ -30,12 +30,8 @@ CreateAddresses.up
 
 require 'rspec'
 
-require 'active_record_ignored_attributes/matchers'
-
-
 RSpec.configure do |config|
-  config.include AttributeNormalizer::RSpecMatcher #, :type => :models
-  config.expect_with(:rspec) { |c| c.syntax = :should }
+  #config.include AttributeNormalizer::RSpecMatcher #, :type => :models
   config.example_status_persistence_file_path = "tmp/rspec_status.txt"
 end
 
