@@ -4,15 +4,9 @@ module AddressConcern
   class Engine < ::Rails::Engine
     engine_name 'address_concern'
 
-    config.autoload_paths   += Dir["#{config.root}/app/models/concerns"]
-    config.eager_load_paths += Dir["#{config.root}/app/models/concerns"]
-
     initializer 'address_concern.active_record' do |app|
       ActiveSupport.on_load :active_record do
-        # These are currently required from lib/address_concern.rb
-        AddressConcern::Address::Base
-        AddressConcern::AddressAssociations
-        # ActiveRecord::Base.extend(AddressConcern::Address::Base)
+        #
       end
     end
 
