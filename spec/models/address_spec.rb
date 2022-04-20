@@ -7,17 +7,21 @@ describe Address do
 
   describe AddressWithNameOnly do
     it do
-      expect(klass.state_name_attribute).to eq 'state'
-      expect(klass.state_code_attribute).to eq nil
-      expect(klass.country_name_attribute).to eq 'country'
-      expect(klass.country_code_attribute).to eq nil
     end
   end
 
   describe AddressWithCodeOnly do
-    it do
+    it 'using alias_attribute' do
+      expect(klass.state_code_attribute).to eq :state
+      expect(klass.country_code_attribute).to eq :country
+
       address = klass.new(country_code: 'AE')
       expect(address.country_code).to eq 'AE'
+      expect(address.country     ).to eq 'AE'
+
+      address = klass.new(country_name: 'Iceland')
+      expect(address.country_name).to eq 'Iceland'
+      expect(address.country     ).to eq 'IS'
     end
   end
 

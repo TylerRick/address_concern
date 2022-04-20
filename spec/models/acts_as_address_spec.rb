@@ -10,9 +10,9 @@ describe 'acts_as_address' do
   # non-default (name or code).
   describe AddressWithNameOnly do
     it do
-      expect(klass.state_name_attribute).to eq 'state'
+      expect(klass.state_name_attribute).to eq :state
       expect(klass.state_code_attribute).to eq nil
-      expect(klass.country_name_attribute).to eq 'country'
+      expect(klass.country_name_attribute).to eq :country
       expect(klass.country_code_attribute).to eq nil
     end
   end
@@ -20,12 +20,14 @@ describe 'acts_as_address' do
   describe AddressWithCodeOnly do
     it do
       expect(klass.state_name_attribute).to eq  nil
-      expect(klass.state_code_attribute).to eq 'state'
+      expect(klass.state_code_attribute).to eq :state
       expect(klass.country_name_attribute).to eq nil
-      expect(klass.country_code_attribute).to eq 'country'
+      expect(klass.country_code_attribute).to eq :country
     end
   end
 
+  # You can't use the same column for both name and code. If config tries to do that, which one
+  # takes precedence?
   describe 'name_attribute == code_attribute' do
     let(:klass) do
       Class.new(ApplicationRecord) do
@@ -40,7 +42,7 @@ describe 'acts_as_address' do
     end
     let(:address) { klass.new }
     it 'name takes precedence' do
-      expect(klass.country_name_attribute).to eq 'country'
+      expect(klass.country_name_attribute).to eq :country
       expect(klass.country_code_attribute).to eq nil
     end
   end

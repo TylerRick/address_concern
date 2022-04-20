@@ -223,6 +223,7 @@ module AddressConcern::Address
     end
 
     #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # country
 
     # Calls country.code
     _ = def self.carmen_country_code_for(country)
@@ -230,7 +231,22 @@ module AddressConcern::Address
     end
     delegate _, to: 'self.class'
 
+    # If you are storing both a country_name and country_code...
+    # This _should_ be the same as the value stored in the country attribute, but allows you to
+    # look it up just to make sure they match (or to update country field to match this).
+    def country_name_from_code
+      if (country = find_carmen_country_by_code(country_code))
+        country.name
+      end
+    end
+    def country_code_from_name
+      if (country = find_carmen_country_by_name(country_name))
+        carmen_country_code_for(country)
+      end
+    end
+
     #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # country
 
     def self.recognize_country_name_alias(name)
       name = case name
@@ -309,7 +325,7 @@ module AddressConcern::Address
     # name=
 
     # def country_name=(name)
-    define_method :"#{country_name_attribute}=" do |name|
+    define_method :"#{country_name_attribute || 'country_name'}=" do |name|
       if name.blank?
         clear_country
       else
@@ -321,24 +337,15 @@ module AddressConcern::Address
       end
     end
 
-    unless :country_name == country_name_attribute
-      alias_attribute :country_name, country_name_attribute
-      #alias_attribute :country_name=, :"#{country_name_attribute}="
-    end
-
-    # If you are storing both a country_name and country_code...
-    # This _should_ be the same as the value stored in the country attribute, but allows you to
-    # look it up just to make sure they match (or to update country field to match this).
-    def country_name_from_code
-      if (country = find_carmen_country_by_code(country_code))
-        country.name
+    # Alias
+    if country_name_attribute
+      unless :country_name == country_name_attribute
+        alias_attribute :country_name, country_name_attribute
+        #alias_attribute :country_name=, :"#{country_name_attribute}="
       end
+    else
+      alias_method :country_name, :country_name_from_code
     end
-
-#    # Aliases
-#    def country_name
-#      country
-#    end
 
     #════════════════════════════════════════════════════════════════════════════════════════════════════
     # state attribute(s)
