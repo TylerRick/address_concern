@@ -89,9 +89,11 @@ describe Address do
   end
 
   describe 'started_filling_out?' do
+    let(:address) { Address.new }
     [:address, :city, :state, :postal_code].each do |attr_name|
       it "should be true when #{attr_name} (and only #{attr_name}) is present" do
-        expect(Address.new(attr_name => 'something')).to be_started_filling_out
+        address.write_attribute attr_name, 'something'
+        expect(address).to be_started_filling_out
       end
     end
     it "should be true when country (and only country) is present" do
@@ -102,7 +104,7 @@ describe Address do
   describe 'normalization' do
     describe 'address' do
       it { is_expected.to normalize_attribute(:address).from("  Line 1  \n    Line 2    \n    ").to("Line 1\nLine 2")}
-      [:name, :city, :state, :postal_code, :country].each do |attr_name|
+      [:city, :state, :postal_code, :country].each do |attr_name|
         it { is_expected.to normalize_attribute(attr_name) }
       end
     end

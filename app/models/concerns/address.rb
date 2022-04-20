@@ -1,3 +1,6 @@
+require_relative '../../../lib/core_extensions/hash/reorder'
+using Hash::Reorder
+
 module AddressConcern::Address
   module Base
     extend ActiveSupport::Concern
@@ -6,6 +9,7 @@ module AddressConcern::Address
     # model class. Unlike the main AddressConcern::Address methods which are only included _after_
     # you call acts_as_address on a model.
     module ClassMethods
+      attr_reader :acts_as_address_config
       def acts_as_address(**options)
         # Have to use yield_self(&not_null) intead of presence because NullColumn.present? => true.
         not_null = ->(column) {
@@ -70,14 +74,14 @@ module AddressConcern::Address
     end
   end
 
+  include ::InspectBase
+
   extend ActiveSupport::Concern
   included do
     #═══════════════════════════════════════════════════════════════════════════════════════════════
     # Config
 
-    def config
-      self.class
-    end
+    delegate :acts_as_address_config, to: 'self.class'
 
     class << self
       #─────────────────────────────────────────────────────────────────────────────────────────────
@@ -130,14 +134,33 @@ module AddressConcern::Address
     #validates_presence_of :country
 
     #═════════════════════════════════════════════════════════════════════════════════════════════════
+    def _assign_attributes(attributes)
+      puts %(attributes=#{(attributes).inspect})
+      attributes = reorder_language_attributes(attributes)
+      puts %(attributes=#{(attributes).inspect})
+      super(attributes)
+    end
+
+    # country needs to be assigned _before_ state for things to work as intended (can't look up
+    # state in state= unless we know which country it is for)
+    def reorder_language_attributes(attributes)
+      attributes.reorder(self.class.country_name_attribute,  self.class.country_code_attribute,
+                           self.class.state_name_attribute,    self.class.state_code_attribute)
+    end
+
+    #═════════════════════════════════════════════════════════════════════════════════════════════════
     normalize_attributes :city, :state, :postal_code, :country
     normalize_attribute  :address, :with => [:cleanlines, :strip]
 
     #═════════════════════════════════════════════════════════════════════════════════════════════════
-    # Country & State
+    # Country & State (Carmen + custom)
 
     # Some of these methods look up by either name or code
 
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # find country
+
+    # Finds by name, falling back to finding by code.
     def self.find_carmen_country(name)
       return name if name.is_a? Carmen::Country
 
@@ -162,16 +185,50 @@ module AddressConcern::Address
     end
     delegate _, to: 'self.class'
 
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # find state
+
+    # Finds by name, falling back to finding by code.
+    def self.find_carmen_state(country_name, name)
+      return name if name.is_a? Carmen::Region
+
+      country = find_carmen_country!(country_name)
+      states = states_for_country(country)
+      (
+        states.named(name) ||
+        states.coded(name)
+      )
+    end
+    def self.find_carmen_state!(country_name, name)
+      find_carmen_state(country_name, name) or
+        raise "state #{name} not found for country #{country_name}"
+    end
+
+    def self.find_carmen_state_by_name(country_name, name)
+      country = find_carmen_country!(country_name)
+      states = states_for_country(country)
+      states.named(name)
+    end
+
+    def self.find_carmen_state_by_code(country_name, code)
+      country = find_carmen_country!(country_name)
+      states = states_for_country(country)
+      states.coded(name)
+    end
+
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+
     # Calls country.code
     _ = def self.carmen_country_code_for(country)
       country.send(carmen_country_code)
     end
     delegate _, to: 'self.class'
 
-    # Calls country.code
+    # Calls state.code
     def self.carmen_state_code_for(state)
       state.send(carmen_state_code)
     end
+
 
     #─────────────────────────────────────────────────────────────────────────────────────────────────
 
@@ -186,23 +243,6 @@ module AddressConcern::Address
       else
         name
       end
-    end
-
-    #─────────────────────────────────────────────────────────────────────────────────────────────────
-
-    def self.find_carmen_state(country_name, name)
-      return name if name.is_a? Carmen::Region
-
-      country = find_carmen_country!(country_name)
-      states = states_for_country(country)
-      (
-        states.named(name) ||
-        states.coded(name)
-      )
-    end
-    def self.find_carmen_state!(country_name, name)
-      find_carmen_state(country_name, name) or
-        raise "state #{name} not found for country #{country_name}"
     end
 
     #─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -238,13 +278,13 @@ module AddressConcern::Address
 
 
     def clear_country
-      write_attribute(config.country_name_attribute, nil) if config.country_name_attribute
-      write_attribute(config.country_code_attribute, nil) if config.country_code_attribute
+      write_attribute(self.class.country_name_attribute, nil) if self.class.country_name_attribute
+      write_attribute(self.class.country_code_attribute, nil) if self.class.country_code_attribute
     end
 
     def set_country_from_carmen_country(country)
-      write_attribute(config.country_name_attribute, country.name                    ) if config.country_name_attribute
-      write_attribute(config.country_code_attribute, carmen_country_code_for(country)) if config.country_code_attribute
+      write_attribute(self.class.country_name_attribute, country.name                    ) if self.class.country_name_attribute
+      write_attribute(self.class.country_code_attribute, carmen_country_code_for(country)) if self.class.country_code_attribute
     end
 
     #─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -273,7 +313,7 @@ module AddressConcern::Address
       if name.blank?
         clear_country
       else
-        if (country = config.find_carmen_country_by_name(name))
+        if (country = self.class.find_carmen_country_by_name(name))
           set_country_from_carmen_country(country)
         else
           clear_country
@@ -290,7 +330,7 @@ module AddressConcern::Address
     # This _should_ be the same as the value stored in the country attribute, but allows you to
     # look it up just to make sure they match (or to update country field to match this).
     def country_name_from_code
-      if (country = find_carmen_country_by_code(country_coded))
+      if (country = find_carmen_country_by_code(country_code))
         country.name
       end
     end
@@ -309,13 +349,13 @@ module AddressConcern::Address
 
 
     def clear_state
-      write_attribute(config.state_name_attribute, nil) if config.state_name_attribute
-      write_attribute(config.state_code_attribute, nil) if config.state_code_attribute
+      write_attribute(self.class.state_name_attribute, nil) if self.class.state_name_attribute
+      write_attribute(self.class.state_code_attribute, nil) if self.class.state_code_attribute
     end
 
     def set_state_from_carmen_state(state)
-      write_attribute(config.state_name_attribute, state.name                  ) if config.state_name_attribute
-      write_attribute(config.state_code_attribute, carmen_state_code_for(state)) if config.state_code_attribute
+      write_attribute(self.class.state_name_attribute, state.name                  ) if self.class.state_name_attribute
+      write_attribute(self.class.state_code_attribute, carmen_state_code_for(state)) if self.class.state_code_attribute
     end
 
     #─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -325,9 +365,14 @@ module AddressConcern::Address
     define_method :"#{state_code_attribute}=" do |code|
       if code.blank?
         clear_state
-      elsif (state = find_carmen_state_by_code(code))
-        # Only set it if it's a recognized state code
-        set_state_from_carmen_state(state)
+      else
+        if carmen_country && (state = find_carmen_state_by_code(carmen_country, code))
+          # Only set it if it's a recognized state code
+          set_state_from_carmen_state(state)
+        else
+          puts carmen_country ? "unknown state code '#{code}'" : "can't find state without country"
+          clear_state
+        end
       end
     end
 
@@ -335,13 +380,16 @@ module AddressConcern::Address
     # name=
 
     # def state_name=(name)
+    # Uses find_carmen_state so if your column was named 'state', you could actually do state = name
+    # or code.
     define_method :"#{state_name_attribute}=" do |name|
       if name.blank?
         clear_state
       else
-        if (state = config.find_carmen_state_by_name(name))
+        if carmen_country && (state = self.class.find_carmen_state(carmen_country, name))
           set_state_from_carmen_state(state)
         else
+          puts carmen_country ? "unknown state name '#{name}'" : "can't find state without country"
           clear_state
         end
       end
@@ -540,19 +588,34 @@ module AddressConcern::Address
     #════════════════════════════════════════════════════════════════════════════════════════════════════
     # Misc. output
 
+    def address_lines
+      #if self.class.address_lines_count > 1
+      #else
+        address.to_s.lines.to_a
+      #end
+    end
     def parts
       [
-        name,
-        address.to_s.lines.to_a,
+        #name,
+        *address_lines,
         city,
         state_name,
         postal_code,
         country_name,
-      ].flatten.reject(&:blank?)
+      ].reject(&:blank?)
     end
 
     def inspect
-      inspect_with([:id, :name, :address, :city, :state, :postal_code, :country], ['{', '}'])
+      inspect_base(
+        :id,
+        #:name,
+        :address,
+        # address_2 ...
+        :city,
+        :state,
+        :postal_code,
+        :country,
+      )
     end
 
     #─────────────────────────────────────────────────────────────────────────────────────────────────
