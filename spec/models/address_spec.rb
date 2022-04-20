@@ -165,26 +165,20 @@ describe Address do
       # Unlike state_name=, country_name does not use find_carmen_country. Usually with country
       # you'll know very well ahead of time whether you're dealing with names or codes. Less likely
       # with states.
-      it { expect(subject.country_name).to eq(nil) }
+      it { expect(subject.country_name).to eq('US') }
     end
 
     specify 'setting to unknown country' do
-      # Set it to a known country first to show that it actually *clears* these fields if they were previously set
-      address.country = 'Iceland'
-
-      #expect { expect {
       address.country = 'Fireland'
-      #}.to change(address, :country_name).to(nil)
-      #}.to change(address, :country_code).to(nil)
-      expect(address.country_name).to eq nil
+      expect(address.country_name).to eq 'Fireland'
       expect(address.country_code).to eq nil
 
       address.country = 'Northern Ireland'
-      expect(address.country_name).to eq nil
+      expect(address.country_name).to eq 'Northern Ireland'
       expect(address.country_code).to eq nil
 
       address.country = 'Estados Unidos'
-      expect(address.country_name).to eq nil
+      expect(address.country_name).to eq 'Estados Unidos'
       expect(address.country_code).to eq nil
     end
   end
@@ -198,14 +192,8 @@ describe Address do
     end
 
     specify 'setting to unknown country' do
-      # Set it to a known country first to show that it actually *clears* these fields if they were previously set
-      address.country_code = 'IS'
-
-      #expect { expect {
       address.country = 'FL'
-      #}.to change(address, :country_name).to(nil)
-      #}.to change(address, :country_code).to(nil)
-      expect(address.country_name).to eq nil
+      expect(address.country_name).to eq 'FL'
       expect(address.country_code).to eq nil
     end
   end
@@ -325,12 +313,16 @@ describe Address do
       it { expect(subject.city_state_name).to    eq('Ocala, Florida') }
       it { expect(subject.city_state_country).to eq('Ocala, Florida, United States') }
     end
-    context "when address has a state name entered for :state instead of an abbreviation, but state is for different country" do
+    context "when address has a state name instead of code entered for state_name, and state is for different country" do
       let(:user) { User.create }
-      subject { user.build_physical_address(address: '123', city: 'Ocala', state: 'FL', country_name: 'Denmark') }
-      it { expect(subject.city_state_code).to    eq('Ocala, FL') }
-      it { expect(subject.city_state_name).to    eq('Ocala, FL') }
-      it { expect(subject.city_state_country).to eq('Ocala, FL, Denmark') }
+      subject { user.build_physical_address(address: '123', city: 'Ocala', state_code: 'FL', country_name: 'Denmark') }
+      it do
+        expect(subject.state_code).         to eq('FL')
+        expect(subject.state_name).         to eq(nil)
+        expect(subject.city_state_code).    to eq('Ocala, FL')
+        expect(subject.city_state_name).    to eq('Ocala')
+        expect(subject.city_state_country). to eq('Ocala, Denmark')
+      end
     end
   end
 
