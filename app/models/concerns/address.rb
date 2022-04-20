@@ -401,7 +401,7 @@ module AddressConcern::Address
         else
           #puts carmen_country ? "unknown state code '#{value}'" : "can't find state without country"
           state_config[:on_unknown].(value, :code)
-          # TODO: write
+          write_attribute(self.class.state_code_attribute, value) if self.class.state_code_attribute
         end
       end
     end
@@ -431,7 +431,7 @@ module AddressConcern::Address
         else
           #puts carmen_country ? "unknown state name '#{name}'" : "can't find state without country"
           state_config[:on_unknown].(value, :name)
-          # TODO: write
+          write_attribute(self.class.state_name_attribute, value) if self.class.state_name_attribute
         end
       end
     end

@@ -7,16 +7,16 @@ describe Address do
 
   describe AddressWithNameOnly do
     it 'using attribute alias' do
-#      expect(klass.state_name_attribute).to eq :state
-#      expect(klass.country_name_attribute).to eq :country
-#
-#      address = klass.new(country_code: 'AE')
-#      expect(address.country_code).to eq 'AE'
-#      expect(address.country     ).to eq 'United Arab Emirates'
-#
-#      address = klass.new(country_name: 'Iceland')
-#      expect(address.country_name).to eq 'Iceland'
-#      expect(address.country     ).to eq 'Iceland'
+      expect(klass.state_name_attribute).to eq :state
+      expect(klass.country_name_attribute).to eq :country
+
+      address = klass.new(country_code: 'AE')
+      expect(address.country_code).to eq 'AE'
+      expect(address.country     ).to eq 'United Arab Emirates'
+
+      address = klass.new(country_name: 'Iceland')
+      expect(address.country_name).to eq 'Iceland'
+      expect(address.country     ).to eq 'Iceland'
 
       address = klass.new(country: 'United States', state_code: 'ID')
       expect(address.state_code).to eq 'ID'
@@ -60,24 +60,92 @@ describe Address do
     # attribute (in memory only), so that it can be validated and shown in the form if it
     # re-rendered.  To prevent invalid values from being persisted, you should add validations.
     it do
+      address = Address.new
       address.country = 'Fireland'
       expect(address.country_name).to eq('Fireland')
       expect(address.country_code).to eq(nil)
+
+      address = Address.new
+      address.country_code = 'FL'
+      expect(address.country_name).to eq(nil)
+      expect(address.country_code).to eq('FL')
+
+      address = Address.new(country: 'United States')
+      address.state = 'New Zork'
+      expect(address.state_name).to eq('New Zork')
+      expect(address.state_code).to eq(nil)
+
+      address = Address.new(country: 'United States')
+      address.state_code = 'NZ'
+      expect(address.state_name).to eq(nil)
+      expect(address.state_code).to eq('NZ')
     end
 
     describe AddressWithCodeOnly do
       it do
+        address = klass.new
         address.country = 'Fireland'
         expect(address.country_name).to eq(nil)
+        expect(address.country_code).to eq('Fireland')
+
+        address = klass.new
+        address.country_name = 'Fireland'
+        expect(address.country_name).to eq(nil) # No attribute to store it in
         expect(address.country_code).to eq(nil)
+
+        address = klass.new
+        address.country_code = 'FL'
+        expect(address.country_name).to eq(nil)
+        expect(address.country_code).to eq('FL')
+
+        address = klass.new(country: 'United States')
+        address.state = 'New Zork'
+        expect(address.state_name).to eq(nil)
+        expect(address.state_code).to eq('New Zork')
+
+        address = klass.new(country: 'United States')
+        address.state_name = 'New Zork'
+        expect(address.state_name).to eq(nil) # No attribute to store it in
+        expect(address.state_code).to eq(nil)
+
+        address = klass.new(country: 'United States')
+        address.state_code = 'NZ'
+        expect(address.state_name).to eq(nil)
+        expect(address.state_code).to eq('NZ')
       end
     end
 
     describe AddressWithNameOnly do
       it do
+        address = klass.new
         address.country = 'Fireland'
         expect(address.country_name).to eq('Fireland')
         expect(address.country_code).to eq(nil)
+
+        address = klass.new
+        address.country_name = 'Fireland'
+        expect(address.country_name).to eq('Fireland')
+        expect(address.country_code).to eq(nil)
+
+        address = klass.new
+        address.country_code = 'FL'
+        expect(address.country_name).to eq(nil)
+        expect(address.country_code).to eq(nil) # No attribute to store it in
+
+        address = klass.new(country: 'United States')
+        address.state = 'New Zork'
+        expect(address.state_name).to eq('New Zork')
+        expect(address.state_code).to eq(nil)
+
+        address = klass.new(country: 'United States')
+        address.state_name = 'New Zork'
+        expect(address.state_name).to eq('New Zork')
+        expect(address.state_code).to eq(nil)
+
+        address = klass.new(country: 'United States')
+        address.state_code = 'NZ'
+        expect(address.state_name).to eq(nil)
+        expect(address.state_code).to eq(nil) # No attribute to store it in
       end
     end
   end
