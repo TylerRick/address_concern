@@ -2,9 +2,12 @@ require 'spec_helper'
 
 describe 'acts_as_address' do
   def klass
-    subject.class
+    described_class
   end
 
+  # These models' table only have a single column for state and country.
+  # This tests both the default (zero-config) behavior and how the same column can be used for
+  # non-default (name or code).
   describe AddressWithNameOnly do
     it do
       expect(klass.state_name_attribute).to eq 'state'
@@ -26,6 +29,7 @@ describe 'acts_as_address' do
   describe 'name_attribute == code_attribute' do
     let(:klass) do
       Class.new(ApplicationRecord) do
+        self.table_name = 'addresses'
         acts_as_address(
           country: {
             name_attribute: 'country',

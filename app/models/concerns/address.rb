@@ -2,47 +2,66 @@ module AddressConcern::Address
   module Base
     extend ActiveSupport::Concern
 
+    # These (Base) class methods are added to ActiveRecord::Base so that they will be available from _any_
+    # model class. Unlike the main AddressConcern::Address methods which are only included _after_
+    # you call acts_as_address on a model.
     module ClassMethods
       def acts_as_address(**options)
-        @acts_as_address_config = config = { 
+        # Have to use yield_self(&not_null) intead of presence because NullColumn.present? => true.
+        not_null = ->(column) {
+          column.type.nil? ? nil : column
+        }
+        highest_address_line_column = (
+          (1..3).select { |i|
+            column_for_attribute(:"address_#{i}").yield_self(&not_null).present?
+          }.last
+        )
+        options = options.deep_symbolize_keys
+        default_config = { 
           state: {
-            #code_attribute: :state,
-            code_attribute: column_for_attribute(:state_code).presence&.name ||
-                           (column_for_attribute(:state).presence&.name unless options.dig('state', 'name_attribute').to_s == 'state'),
+            validate: false,
 
-            name_attribute: column_for_attribute(:state_name).presence&.name ||
-                           (column_for_attribute(:state).presence&.name unless options.dig('state', 'code_attribute').to_s == 'state'),
+            #code_attribute: :state,
+            code_attribute: column_for_attribute(:state_code).yield_self(&not_null)&.name ||
+                           (column_for_attribute(:state).yield_self(&not_null)&.name unless options.dig(:state, :name_attribute).to_s == 'state'),
+
+            name_attribute: column_for_attribute(:state_name).yield_self(&not_null)&.name ||
+                           (column_for_attribute(:state).yield_self(&not_null)&.name unless options.dig(:state, :code_attribute).to_s == 'state'),
             #name_attribute: :state_name,
           },
           country: {
-            # By default, coded (same as country_alpha2) will be used
-            carmen_code: :coded, # :country_alpha2, :country_alpha3
+            validate: false,
+
+            
+            # By default, code (same as alpha_2_code) will be used
+            carmen_code: :code, # or alpha_2_code, alpha_3_code, :numeric_code
 
             #code_attribute: :country,
-            code_attribute: column_for_attribute(:country_code).presence&.name ||
-                           (column_for_attribute(:country).presence&.name unless options.dig('country', 'name_attribute').to_s == 'country'),
+            code_attribute: column_for_attribute(:country_code).yield_self(&not_null)&.name ||
+                           (column_for_attribute(:country).yield_self(&not_null)&.name unless options.dig(:country, :name_attribute).to_s == 'country'),
 
-            name_attribute: column_for_attribute(:country_name).presence&.name ||
-                           (column_for_attribute(:country).presence&.name unless options.dig('country', 'code_attribute').to_s == 'country'),
+            name_attribute: column_for_attribute(:country_name).yield_self(&not_null)&.name ||
+                           (column_for_attribute(:country).yield_self(&not_null)&.name unless options.dig(:country, :code_attribute).to_s == 'country'),
             #name_attribute: :country_name,
           },
+          address: {
+            validate: false,
+            line_columns: highest_address_line_column,
+          }
+        }
+        @acts_as_address_config = config = { 
+          **default_config
         }.deep_merge(options)
 
         [:state, :country].each do |group|
+          # Can't use the same column for code and name, so if it would be the same (by default or
+          # otherwise), let it be used for name only instead.
           if config[group][:code_attribute] == config[group][:name_attribute]
             config[group].delete(:code_attribute)
           end
         end
 
         include ::AddressConcern::Address
-      end
-
-      def country_config
-        config = @acts_as_address_config[:country] || {}
-      end
-
-      def state_config
-        config = @acts_as_address_config[:state] || {}
       end
 
       def belongs_to_addressable(**options)
@@ -53,14 +72,62 @@ module AddressConcern::Address
 
   extend ActiveSupport::Concern
   included do
+    #═══════════════════════════════════════════════════════════════════════════════════════════════
+    # Config
+
+    def config
+      self.class
+    end
+
+    class << self
+      #─────────────────────────────────────────────────────────────────────────────────────────────
+      def country_config
+        @acts_as_address_config[:country] || {}
+      end
+
+      # usually :code
+      def carmen_country_code
+        country_config[:carmen_code]
+      end
+
+      # usually :coded
+      def carmen_country_code_find_method
+        :"#{carmen_country_code}d"
+      end
+
+      # 'country' or similar
+      def country_name_attribute
+        country_config[:name_attribute]
+      end
+
+      def country_code_attribute
+        country_config[:code_attribute]
+      end
+
+      #─────────────────────────────────────────────────────────────────────────────────────────────
+
+      def state_config
+        @acts_as_address_config[:state] || {}
+      end
+
+      def carmen_state_code
+        state_config[:carmen_code]
+      end
+
+      def state_name_attribute
+        state_config[:name_attribute]
+      end
+
+      def state_code_attribute
+        state_config[:code_attribute]
+      end
+
+    end
+
     #═════════════════════════════════════════════════════════════════════════════════════════════════
-    #validates_presence_of :name
     #validates_presence_of :address
     #validates_presence_of :state, :if => :state_required?
     #validates_presence_of :country
-    #validates_format_of :phone, :with => /^[0-9\-\+ ]*$/
-    #validates_format_of :email, :with => /^[^@]*@.*\.[^\.]*$/, :message => 'is invalid. Please enter an address in the format of you@company.com'
-    #validates_presence_of :phone, :message => ' is required.'
 
     #═════════════════════════════════════════════════════════════════════════════════════════════════
     normalize_attributes :city, :state, :postal_code, :country
@@ -89,17 +156,25 @@ module AddressConcern::Address
       Carmen::Country.named(name)
     end
 
-    def self.find_carmen_country_by_code(code)
-      Carmen::Country.send(carmen_country_code, code)
+    _ = def self.find_carmen_country_by_code(code)
+      Carmen::Country.send(carmen_country_code_find_method, code)
     end
+    delegate _, to: 'self.class'
 
-    def self.carmen_code_for(country)
+    # Calls country.code
+    _ = def self.carmen_country_code_for(country)
       country.send(carmen_country_code)
+    end
+    delegate _, to: 'self.class'
+
+    # Calls country.code
+    def self.carmen_state_code_for(state)
+      state.send(carmen_state_code)
     end
 
     #─────────────────────────────────────────────────────────────────────────────────────────────────
 
-    def recognize_country_name_alias(name)
+    def self.recognize_country_name_alias(name)
       name = case name
       when 'USA'
         'United States'
@@ -158,24 +233,9 @@ module AddressConcern::Address
     #═════════════════════════════════════════════════════════════════════════════════════════════════
     # country attribute(s)
 
-    def config
-      self.class
-    end
-
-    def self.carmen_country_code
-      country_config[:carmen_code]
-    end
-
-    def self.country_name_attribute
-      country_config[:name_attribute]
-    end
-
-    def self.country_code_attribute
-      country_config[:code_attribute]
-    end
-
     #─────────────────────────────────────────────────────────────────────────────────────────────────
     # setters
+
 
     def clear_country
       write_attribute(config.country_name_attribute, nil) if config.country_name_attribute
@@ -183,8 +243,8 @@ module AddressConcern::Address
     end
 
     def set_country_from_carmen_country(country)
-      write_attribute(config.country_name_attribute, country.name            ) if config.country_name_attribute
-      write_attribute(config.country_code_attribute, carmen_code_for(country)) if config.country_code_attribute
+      write_attribute(config.country_name_attribute, country.name                    ) if config.country_name_attribute
+      write_attribute(config.country_code_attribute, carmen_country_code_for(country)) if config.country_code_attribute
     end
 
     #─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -198,6 +258,11 @@ module AddressConcern::Address
         # Only set it if it's a recognized country code
         set_country_from_carmen_country(country)
       end
+    end
+
+    unless 'country_code' == country_code_attribute.to_s
+      alias_attribute :country_code , :"#{country_code_attribute}"
+      alias_attribute :country_code=, :"#{country_code_attribute}="
     end
 
     #─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -216,20 +281,77 @@ module AddressConcern::Address
       end
     end
 
-    # This should not be different from the value stored in the country attribute, but allows you to
+    unless 'country_name' == country_name_attribute.to_s
+      alias_attribute :country_name=, :"#{country_name_attribute}="
+    end
+
+    # If you are storing both a country_name and country_code...
+    # This _should_ be the same as the value stored in the country attribute, but allows you to
     # look it up just to make sure they match (or to update country field to match this).
     def country_name_from_code
-      if (country = Carmen::Country.alpha_2_coded(country_alpha2))
+      if (country = find_carmen_country_by_code(country_coded))
         country.name
       end
     end
 
-    # Aliases
-    def country_name
-      country
+#    # Aliases
+#    def country_name
+#      country
+#    end
+
+    #════════════════════════════════════════════════════════════════════════════════════════════════════
+    # state attribute(s)
+    # (This is identical to country section above with s/country/state/)
+
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # setters
+
+
+    def clear_state
+      write_attribute(config.state_name_attribute, nil) if config.state_name_attribute
+      write_attribute(config.state_code_attribute, nil) if config.state_code_attribute
     end
-    def country_name=(name)
-      self.country = name
+
+    def set_state_from_carmen_state(state)
+      write_attribute(config.state_name_attribute, state.name                  ) if config.state_name_attribute
+      write_attribute(config.state_code_attribute, carmen_state_code_for(state)) if config.state_code_attribute
+    end
+
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # code=
+
+    # def state_code=(code)
+    define_method :"#{state_code_attribute}=" do |code|
+      if code.blank?
+        clear_state
+      elsif (state = find_carmen_state_by_code(code))
+        # Only set it if it's a recognized state code
+        set_state_from_carmen_state(state)
+      end
+    end
+
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # name=
+
+    # def state_name=(name)
+    define_method :"#{state_name_attribute}=" do |name|
+      if name.blank?
+        clear_state
+      else
+        if (state = config.find_carmen_state_by_name(name))
+          set_state_from_carmen_state(state)
+        else
+          clear_state
+        end
+      end
+    end
+
+    # This should not be different from the value stored in the state attribute, but allows you to
+    # look it up just to make sure they match (or to update state field to match this).
+    def state_name_from_code
+      if (state = Carmen::state.alpha_2_coded(state_alpha2))
+        state.name
+      end
     end
 
     #════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -432,7 +554,7 @@ module AddressConcern::Address
       inspect_with([:id, :name, :address, :city, :state, :postal_code, :country], ['{', '}'])
     end
 
-    #-------------------------------------------------------------------------------------------------
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
   end
 end
 

@@ -1,6 +1,26 @@
 require 'spec_helper'
 
 describe Address do
+  def klass
+    described_class
+  end
+
+  describe AddressWithNameOnly do
+    it do
+      expect(klass.state_name_attribute).to eq 'state'
+      expect(klass.state_code_attribute).to eq nil
+      expect(klass.country_name_attribute).to eq 'country'
+      expect(klass.country_code_attribute).to eq nil
+    end
+  end
+
+  describe AddressWithCodeOnly do
+    it do
+      address = klass.new(country_code: 'AE')
+      expect(address.country_code).to eq 'AE'
+    end
+  end
+
   describe 'setting country by name' do
     let(:address) { Address.new }
     specify 'setting to known country' do

@@ -9,6 +9,7 @@ module AddressConcern
 
     initializer 'address_concern.active_record' do |app|
       ActiveSupport.on_load :active_record do
+        # These are currently required from lib/address_concern.rb
         AddressConcern::Address::Base
         AddressConcern::AddressAssociations
         # ActiveRecord::Base.extend(AddressConcern::Address::Base)
@@ -16,8 +17,8 @@ module AddressConcern
     end
 
     # Set up our default configuration options.
-    initializer 'address_concern.defaults', before: :load_config_initializers do |app|
-      eval File.read("#{config.root}/config/address_concern.rb")
-    end
+    #initializer 'address_concern.defaults', before: :load_config_initializers do |app|
+    #  eval File.read("#{config.root}/config/address_concern.rb")
+    #end
   end
 end

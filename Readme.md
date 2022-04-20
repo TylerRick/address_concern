@@ -36,7 +36,8 @@ For country and state/providence, you may choose to store both the code and name
 just name. Remove from the migration the columns you don't need.
 
 By default, it will store country name in `country_name` or `country` if one of those columns exist,
-and store country code in `country_code` or `country` if one of those columns exist.
+and store country code in `country_code` or `country` if one of those columns exist. If _only_ a
+`country` column exists, it will be used as __ by default.
 
 By default, it will store state name in `state_name` or `state` if one of those columns exist,
 and store state code in `state_code` or `state` if one of those columns exist.
@@ -157,9 +158,10 @@ If you wish to customize that `belongs_to`, you can pass in any options you like
 ```ruby
 class Address < ApplicationRecord
   include AddressConcern::Address
+
+  belongs_to_addressable options…
 end
 ```
-belongs_to_addressable
 
 ## `has_addresses`
 
