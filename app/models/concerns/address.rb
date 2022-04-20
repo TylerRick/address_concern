@@ -101,11 +101,11 @@ module AddressConcern::Address
 
       # 'country' or similar
       def country_name_attribute
-        country_config[:name_attribute]
+        country_config[:name_attribute]&.to_sym
       end
 
       def country_code_attribute
-        country_config[:code_attribute]
+        country_config[:code_attribute]&.to_sym
       end
 
       #─────────────────────────────────────────────────────────────────────────────────────────────
@@ -119,11 +119,11 @@ module AddressConcern::Address
       end
 
       def state_name_attribute
-        state_config[:name_attribute]
+        state_config[:name_attribute]&.to_sym
       end
 
       def state_code_attribute
-        state_config[:code_attribute]
+        state_config[:code_attribute]&.to_sym
       end
 
     end
@@ -135,9 +135,8 @@ module AddressConcern::Address
 
     #═════════════════════════════════════════════════════════════════════════════════════════════════
     def _assign_attributes(attributes)
-      puts %(attributes=#{(attributes).inspect})
+      attributes = attributes.symbolize_keys
       attributes = reorder_language_attributes(attributes)
-      puts %(attributes=#{(attributes).inspect})
       super(attributes)
     end
 
@@ -145,7 +144,7 @@ module AddressConcern::Address
     # state in state= unless we know which country it is for)
     def reorder_language_attributes(attributes)
       attributes.reorder(self.class.country_name_attribute,  self.class.country_code_attribute,
-                           self.class.state_name_attribute,    self.class.state_code_attribute)
+                         self.class.  state_name_attribute,  self.class.  state_code_attribute)
     end
 
     #═════════════════════════════════════════════════════════════════════════════════════════════════
@@ -224,12 +223,6 @@ module AddressConcern::Address
     end
     delegate _, to: 'self.class'
 
-    # Calls state.code
-    def self.carmen_state_code_for(state)
-      state.send(carmen_state_code)
-    end
-
-
     #─────────────────────────────────────────────────────────────────────────────────────────────────
 
     def self.recognize_country_name_alias(name)
@@ -300,7 +293,7 @@ module AddressConcern::Address
       end
     end
 
-    unless 'country_code' == country_code_attribute.to_s
+    unless :country_code == country_code_attribute
       alias_attribute :country_code, :"#{country_code_attribute}"
       #alias_attribute :country_code=, :"#{country_code_attribute}="
     end
@@ -321,7 +314,7 @@ module AddressConcern::Address
       end
     end
 
-    unless 'country_name' == country_name_attribute.to_s
+    unless :country_name == country_name_attribute
       alias_attribute :country_name, country_name_attribute
       #alias_attribute :country_name=, :"#{country_name_attribute}="
     end
@@ -354,8 +347,8 @@ module AddressConcern::Address
     end
 
     def set_state_from_carmen_state(state)
-      write_attribute(self.class.state_name_attribute, state.name                  ) if self.class.state_name_attribute
-      write_attribute(self.class.state_code_attribute, carmen_state_code_for(state)) if self.class.state_code_attribute
+      write_attribute(self.class.state_name_attribute, state.name) if self.class.state_name_attribute
+      write_attribute(self.class.state_code_attribute, state.code) if self.class.state_code_attribute
     end
 
     #─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -538,11 +531,11 @@ module AddressConcern::Address
     # Lines of a postal address
     def lines
       [
-        name,
-        address.to_s.lines.to_a,
+        #name,
+        *address_lines,
         city_line,
         country_name,
-      ].flatten.reject(&:blank?)
+      ].reject(&:blank?)
     end
 
     # Used by #lines
