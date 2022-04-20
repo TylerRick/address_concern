@@ -185,11 +185,10 @@ module AddressConcern::Address
       Carmen::Country.named(name)
     end
 
-    _ = def self.find_carmen_country_by_code(code)
+    def self.find_carmen_country_by_code(code)
       # Carmen::Country.coded(code)
       Carmen::Country.send(carmen_country_code_find_method, code)
     end
-    delegate _, to: 'self.class'
 
     #─────────────────────────────────────────────────────────────────────────────────────────────────
     # find state
@@ -219,7 +218,7 @@ module AddressConcern::Address
     def self.find_carmen_state_by_code(country_name, code)
       country = find_carmen_country!(country_name)
       states = states_for_country(country)
-      states.coded(name)
+      states.coded(code)
     end
 
     #─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -235,13 +234,27 @@ module AddressConcern::Address
     # This _should_ be the same as the value stored in the country attribute, but allows you to
     # look it up just to make sure they match (or to update country field to match this).
     def country_name_from_code
-      if (country = find_carmen_country_by_code(country_code))
+      if (country = self.class.find_carmen_country_by_code(country_code))
         country.name
       end
     end
     def country_code_from_name
-      if (country = find_carmen_country_by_name(country_name))
-        carmen_country_code_for(country)
+      if (country = self.class.find_carmen_country_by_name(country_name))
+        self.class.carmen_country_code_for(country)
+      end
+    end
+
+    #─────────────────────────────────────────────────────────────────────────────────────────────────
+    # state
+
+    def state_name_from_code
+      if carmen_country && (state = find_carmen_state_by_code(carmen_country, state_code))
+        state.name
+      end
+    end
+    def state_code_from_name
+      if carmen_country && (state = find_carmen_state_by_name(carmen_country, state_name))
+        state.code
       end
     end
 
@@ -276,7 +289,7 @@ module AddressConcern::Address
     #─────────────────────────────────────────────────────────────────────────────────────────────────
 
     def carmen_country
-      find_carmen_country_by_code(country_code)
+      self.class.find_carmen_country_by_code(country_code)
     end
 
     def carmen_state
@@ -307,41 +320,51 @@ module AddressConcern::Address
     # code=
 
     # def country_code=(code)
-    define_method :"#{country_code_attribute}=" do |code|
-      if code.blank?
+    define_method :"#{country_code_attribute || 'country_code'}=" do |value|
+      if value.blank?
         clear_country
-      elsif (country = find_carmen_country_by_code(code))
-        # Only set it if it's a recognized country code
-        set_country_from_carmen_country(country)
+      else
+        if (country = self.class.find_carmen_country_by_code(value))
+          set_country_from_carmen_country(country)
+        else
+          country_config[:on_unknown].(value, :code)
+          write_attribute(self.class.country_code_attribute, value) if self.class.country_code_attribute
+        end
       end
     end
 
-    unless :country_code == country_code_attribute
-      alias_attribute :country_code, :"#{country_code_attribute}"
-      #alias_attribute :country_code=, :"#{country_code_attribute}="
+    # Alias attribute
+    if country_code_attribute
+      unless :country_code == country_code_attribute
+        alias_attribute :country_code, :"#{country_code_attribute}"
+        #alias_method :country_code=, :"#{country_code_attribute}="
+      end
+    else
+      alias_method :country_code, :country_code_from_name
     end
 
     #─────────────────────────────────────────────────────────────────────────────────────────────────
     # name=
 
     # def country_name=(name)
-    define_method :"#{country_name_attribute || 'country_name'}=" do |name|
-      if name.blank?
+    define_method :"#{country_name_attribute || 'country_name'}=" do |value|
+      if value.blank?
         clear_country
       else
-        if (country = self.class.find_carmen_country_by_name(name))
+        if (country = self.class.find_carmen_country_by_name(value))
           set_country_from_carmen_country(country)
         else
-          clear_country
+          country_config[:on_unknown].(value, :name)
+          write_attribute(self.class.country_name_attribute, value) if self.class.country_name_attribute
         end
       end
     end
 
-    # Alias
+    # Alias attribute
     if country_name_attribute
       unless :country_name == country_name_attribute
         alias_attribute :country_name, country_name_attribute
-        #alias_attribute :country_name=, :"#{country_name_attribute}="
+        #alias_method :country_name=, :"#{country_name_attribute}="
       end
     else
       alias_method :country_name, :country_name_from_code
@@ -369,19 +392,29 @@ module AddressConcern::Address
     # code=
 
     # def state_code=(code)
-    define_method :"#{state_code_attribute}=" do |code|
-      if code.blank?
+    define_method :"#{state_code_attribute}=" do |value|
+      byebug
+      if value.blank?
         clear_state
       else
-        if carmen_country && (state = self.class.find_carmen_state_by_code(carmen_country, code))
-          # Only set it if it's a recognized state code
+        if carmen_country && (state = self.class.find_carmen_state_by_code(carmen_country, value))
           set_state_from_carmen_state(state)
         else
-          #puts carmen_country ? "unknown state code '#{code}'" : "can't find state without country"
-          state_config[:on_unknown].(code, :code)
-          clear_state
+          #puts carmen_country ? "unknown state code '#{value}'" : "can't find state without country"
+          state_config[:on_unknown].(value, :code)
+          # TODO: write
         end
       end
+    end
+
+    # Alias attribute
+    if state_code_attribute
+      unless :state_code == state_code_attribute
+        alias_attribute :state_code, :"#{state_code_attribute}"
+        #alias_method :state_code=, :"#{state_code_attribute}="
+      end
+    else
+      alias_method :state_code, :state_code_from_name
     end
 
     #─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -390,26 +423,28 @@ module AddressConcern::Address
     # def state_name=(name)
     # Uses find_carmen_state so if your column was named 'state', you could actually do state = name
     # or code.
-    define_method :"#{state_name_attribute}=" do |name|
-      if name.blank?
+    define_method :"#{state_name_attribute}=" do |value|
+      if value.blank?
         clear_state
       else
-        if carmen_country && (state = self.class.find_carmen_state(carmen_country, name))
+        if carmen_country && (state = self.class.find_carmen_state(carmen_country, value))
           set_state_from_carmen_state(state)
         else
           #puts carmen_country ? "unknown state name '#{name}'" : "can't find state without country"
-          state_config[:on_unknown].(name, :name)
-          clear_state
+          state_config[:on_unknown].(value, :name)
+          # TODO: write
         end
       end
     end
 
-    # This should not be different from the value stored in the state attribute, but allows you to
-    # look it up just to make sure they match (or to update state field to match this).
-    def state_name_from_code
-      if (state = Carmen::state.alpha_2_coded(state_alpha2))
-        state.name
+    # Alias attribute
+    if state_name_attribute
+      unless :state_name == state_name_attribute
+        alias_attribute :state_name, state_name_attribute
+        #alias_method :state_name=, :"#{state_name_attribute}="
       end
+    else
+      alias_method :state_name, :state_name_from_code
     end
 
     #════════════════════════════════════════════════════════════════════════════════════════════════════

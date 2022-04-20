@@ -6,7 +6,25 @@ describe Address do
   end
 
   describe AddressWithNameOnly do
-    it do
+    it 'using alias_attribute' do
+      expect(klass.state_name_attribute).to eq :state
+      expect(klass.country_name_attribute).to eq :country
+
+      address = klass.new(country_code: 'AE')
+      expect(address.country_code).to eq 'AE'
+      expect(address.country     ).to eq 'United Arab Emirates'
+
+      address = klass.new(country_name: 'Iceland')
+      expect(address.country_name).to eq 'Iceland'
+      expect(address.country     ).to eq 'Iceland'
+
+      address = klass.new(country: 'United States', state_code: 'ID')
+      expect(address.state_code).to eq 'ID'
+      expect(address.state     ).to eq 'Idaho'
+
+      address = klass.new(country: 'United States', state_name: 'Idaho')
+      expect(address.state_name).to eq 'Idaho'
+      expect(address.state     ).to eq 'Idaho'
     end
   end
 
@@ -22,6 +40,45 @@ describe Address do
       address = klass.new(country_name: 'Iceland')
       expect(address.country_name).to eq 'Iceland'
       expect(address.country     ).to eq 'IS'
+
+      address = klass.new(country: 'US', state_code: 'ID')
+      expect(address.state_code).to eq 'ID'
+      expect(address.state     ).to eq 'ID'
+
+      #address = klass.new(country: 'US', state_name: 'Idaho')
+      address = klass.new(country: 'US', state_name: 'Idaho')
+      expect(address.state_name).to eq 'Idaho'
+      expect(address.state     ).to eq 'ID'
+    end
+  end
+
+  #═════════════════════════════════════════════════════════════════════════════════════════════════
+  describe 'setting to invalid values' do
+    let(:address) { klass.new }
+
+    # Even if it's an unrecognized country/state code/name, we need to write the value to the
+    # attribute (in memory only), so that it can be validated and shown in the form if it
+    # re-rendered.  To prevent invalid values from being persisted, you should add validations.
+    it do
+      address.country = 'Fireland'
+      expect(address.country_name).to eq('Fireland')
+      expect(address.country_code).to eq(nil)
+    end
+
+    describe AddressWithCodeOnly do
+      it do
+        address.country = 'Fireland'
+        expect(address.country_name).to eq(nil)
+        expect(address.country_code).to eq(nil)
+      end
+    end
+
+    describe AddressWithNameOnly do
+      it do
+        address.country = 'Fireland'
+        expect(address.country_name).to eq('Fireland')
+        expect(address.country_code).to eq(nil)
+      end
     end
   end
 
