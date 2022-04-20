@@ -157,6 +157,7 @@ module AddressConcern::Address
     end
 
     _ = def self.find_carmen_country_by_code(code)
+      # Carmen::Country.coded(code)
       Carmen::Country.send(carmen_country_code_find_method, code)
     end
     delegate _, to: 'self.class'
@@ -219,8 +220,7 @@ module AddressConcern::Address
     #─────────────────────────────────────────────────────────────────────────────────────────────────
 
     def carmen_country
-      # Carmen::Country.coded(country_code)
-      Carmen::Country.send(config.carmen_country_code, country_code)
+      find_carmen_country_by_code(country_code)
     end
 
     def carmen_state
@@ -261,8 +261,8 @@ module AddressConcern::Address
     end
 
     unless 'country_code' == country_code_attribute.to_s
-      alias_attribute :country_code , :"#{country_code_attribute}"
-      alias_attribute :country_code=, :"#{country_code_attribute}="
+      alias_attribute :country_code, :"#{country_code_attribute}"
+      #alias_attribute :country_code=, :"#{country_code_attribute}="
     end
 
     #─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -282,7 +282,8 @@ module AddressConcern::Address
     end
 
     unless 'country_name' == country_name_attribute.to_s
-      alias_attribute :country_name=, :"#{country_name_attribute}="
+      alias_attribute :country_name, country_name_attribute
+      #alias_attribute :country_name=, :"#{country_name_attribute}="
     end
 
     # If you are storing both a country_name and country_code...

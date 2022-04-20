@@ -44,7 +44,7 @@ describe Address do
       expect(address.country_name).to eq nil
       expect(address.country_code).to eq nil
 
-      address.country = 'USA'
+      address.country = 'Estados Unidos'
       expect(address.country_name).to eq nil
       expect(address.country_code).to eq nil
     end
@@ -82,6 +82,10 @@ describe Address do
       expect(address.country_name).to           eq('Congo, The Democratic Republic of the')
       expect(address.country_name_from_code).to eq('Congo, The Democratic Republic of the')
     end; end
+    it do
+      address.country = 'USA'
+      expect(address.country_name).to eq('United States')
+    end
   end
 
   describe 'started_filling_out?' do
