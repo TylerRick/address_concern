@@ -46,5 +46,21 @@ describe 'acts_as_address' do
       expect(klass.country_code_attribute).to eq nil
     end
   end
+
+  describe 'address lines' do
+    describe Address do
+      it do
+        expect(klass.multi_line_address?).to eq true
+        expect(klass.address_attributes).to eq [:address]
+      end
+    end
+
+    describe AddressWithSeparateAddressColumns do
+      it do
+        expect(klass.multi_line_address?).to eq false
+        expect(klass.address_attributes).to eq [:address_1, :address_2, :address_3]
+      end
+    end
+  end
 end
 

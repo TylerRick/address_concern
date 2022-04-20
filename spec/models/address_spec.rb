@@ -251,6 +251,46 @@ describe Address do
   end
 
   #═════════════════════════════════════════════════════════════════════════════════════════════════
+  describe 'address, address_lines' do
+    describe Address do
+      it do
+        expect(klass.multi_line_address?).to eq true
+
+        address = klass.new(address: str = 'Line 1')
+        expect(address.address).to eq str
+
+        address = klass.new(address: str = "Line 1\nLine 2\nLine 3")
+        expect(address.address).to eq str
+        expect(address.address_lines).to eq [
+          'Line 1',
+          'Line 2',
+          'Line 3',
+        ]
+      end
+    end
+
+    describe AddressWithSeparateAddressColumns do
+      it do
+        expect(klass.multi_line_address?).to eq false
+
+        address = klass.new(
+          address_1: 'Line 1',
+          address_2: 'Line 2',
+          address_3: 'Line 3',
+        )
+        expect(address.address_1).to eq 'Line 1'
+        expect(address.address_2).to eq 'Line 2'
+        expect(address.address_3).to eq 'Line 3'
+        expect(address.address_lines).to eq [
+          'Line 1',
+          'Line 2',
+          'Line 3',
+        ]
+      end
+    end
+  end
+
+  #═════════════════════════════════════════════════════════════════════════════════════════════════
   describe 'parts and lines' do
     it do
       address = Address.new(

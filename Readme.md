@@ -199,6 +199,32 @@ vacation_address = user.addresses.build(address: 'Vacation', :address_type => 'V
 user.addresses # => [shipping_address, vacation_address]
 ```
 
+## Street address
+
+You are free to either store the street address in a single column like this:
+
+```ruby
+  create_table :addresses do |t|
+    …
+    t.text     :address
+    …
+```
+
+or in separate columns like this:
+
+```ruby
+  create_table :addresses do |t|
+    …
+    t.string   :address_1
+    t.string   :address_2
+    t.string   :address_3
+    …
+```
+
+If you store it in a single column of type text, then it will support multi-line addresses stored in
+that single column. Calling `address.address_lines`, for example, will return an array of address
+lines — however many lines the user entered (you may add validations to limit this as you wish).
+
 # Country/state database
 
 Country/state data comes from the [`carmen`](https://github.com/carmen-ruby/carmen) gem.

@@ -10,6 +10,17 @@ ActiveRecord::Schema.define do
     t.timestamps
   end
 
+  create_table :address_with_separate_address_columns do |t|
+    t.string   :address_1
+    t.string   :address_2
+    t.string   :address_3
+    t.string   :city
+    t.string   :state
+    t.string   :postal_code
+    t.string   :country
+    t.timestamps
+  end
+
   create_table :users, :force => true do |t|
     t.string :name
   end

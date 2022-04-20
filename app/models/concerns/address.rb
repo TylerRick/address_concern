@@ -1,6 +1,9 @@
 require_relative '../../../lib/core_extensions/hash/reorder'
 using Hash::Reorder
 
+require_relative '../../../lib/core_extensions/string/cleanlines'
+using String::Cleanlines
+
 module AddressConcern::Address
   module Base
     extend ActiveSupport::Concern
@@ -15,13 +18,8 @@ module AddressConcern::Address
         not_null = ->(column) {
           column.type.nil? ? nil : column
         }
-        highest_address_line_column = (
-          (1..3).select { |i|
-            column_for_attribute(:"address_#{i}").yield_self(&not_null).present?
-          }.last
-        )
         options = options.deep_symbolize_keys
-        default_config = { 
+        default_config = {
           state: {
             validate: false,
 
@@ -36,7 +34,7 @@ module AddressConcern::Address
           country: {
             validate: false,
 
-            
+
             # By default, code (same as alpha_2_code) will be used
             carmen_code: :code, # or alpha_2_code, alpha_3_code, :numeric_code
 
@@ -50,10 +48,11 @@ module AddressConcern::Address
           },
           address: {
             validate: false,
-            line_columns: highest_address_line_column,
+            # Try to auto-detect address columns
+            attributes: column_names.grep(/address$|^address_\d$/),
           }
         }
-        @acts_as_address_config = config = { 
+        @acts_as_address_config = config = {
           **default_config
         }.deep_merge(options)
 
@@ -130,11 +129,46 @@ module AddressConcern::Address
         state_config[:code_attribute]&.to_sym
       end
 
+      #─────────────────────────────────────────────────────────────────────────────────────────────
+
+      def address_attr_config
+        @acts_as_address_config[:address] || {}
+      end
+
+      def address_attributes
+        Array(address_attr_config[:attributes]).map(&:to_sym)
+      end
+
+      # Address line 1
+      def address_attribute
+        address_attributes[0]
+      end
+
+      def multi_line_address?
+        address_attributes.size == 1 && (
+          column = column_for_attribute(address_attribute)
+          column.type == :text
+        )
+      end
+
+      #─────────────────────────────────────────────────────────────────────────────────────────────
+
+      def configured_address_attributes
+        [
+          *address_attributes,
+          :city,
+          state_name_attribute,
+          state_code_attribute,
+          :postal_code,
+          country_name_attribute,
+          country_code_attribute,
+        ].compact.uniq
+      end
     end
 
     #═════════════════════════════════════════════════════════════════════════════════════════════════
     #validates_presence_of :address
-    #validates_presence_of :state, :if => :state_required?
+    #validates_presence_of :state, if: :state_required?
     #validates_presence_of :country
 
     #═════════════════════════════════════════════════════════════════════════════════════════════════
@@ -145,7 +179,7 @@ module AddressConcern::Address
     end
 
     def self.country_aliases ; [:country_name, :country_code] ; end
-    def self.state_aliases   ; [:state_name, :state_code]     ; end
+    def self.state_aliases   ; [:state_name,   :state_code]   ; end
 
     # country needs to be assigned _before_ state for things to work as intended (can't look up
     # state in state= unless we know which country it is for)
@@ -156,7 +190,7 @@ module AddressConcern::Address
 
     #═════════════════════════════════════════════════════════════════════════════════════════════════
     normalize_attributes :city, :state, :postal_code, :country
-    normalize_attribute  :address, :with => [:cleanlines, :strip]
+    normalize_attribute  *address_attributes, with: [:cleanlines, :strip]
 
     #═════════════════════════════════════════════════════════════════════════════════════════════════
     # Country & State (Carmen + custom)
@@ -560,15 +594,35 @@ module AddressConcern::Address
     #════════════════════════════════════════════════════════════════════════════════════════════════════
 
     def empty?
-      [:address, :city, :state, :postal_code, :country].all? {|_|
+      self.class.configured_address_attributes.all? {|_|
         !self[_].present?
       }
     end
 
     def started_filling_out?
-      [:address, :city, :state, :postal_code, :country].any? {|_|
+      self.class.configured_address_attributes.any? {|_|
         self[_].present?
       }
+    end
+
+    #════════════════════════════════════════════════════════════════════════════════════════════════════
+    # Street address / Address lines
+
+    # Attribute alias for street address line 1
+    #if address_attribute
+    #  unless :address == address_attribute
+    #    alias_attribute :address, :"#{address_attribute}"
+    #  end
+    #end
+
+    def address_lines
+      if self.class.multi_line_address?
+        address.to_s.cleanlines.to_a
+      else
+        self.class.address_attributes.map do |attr_name|
+          send attr_name
+        end
+      end
     end
 
     #════════════════════════════════════════════════════════════════════════════════════════════════════
@@ -589,7 +643,7 @@ module AddressConcern::Address
     # Instead of using `state` method (which is really state_code). That's fine for some countries
     # like US, Canada, Australia but not other countries (presumably).
     #
-    # TODO: Put postal code and city in a different order, as that countries conventions dictate.
+    # TODO: Put postal code and city in a different order, as that country's conventions dictate.
     # See http://bitboost.com/ref/international-address-formats/new-zealand/
     #
     def city_line
@@ -627,12 +681,6 @@ module AddressConcern::Address
     #════════════════════════════════════════════════════════════════════════════════════════════════════
     # Misc. output
 
-    def address_lines
-      #if self.class.address_lines_count > 1
-      #else
-        address.to_s.lines.to_a
-      #end
-    end
     def parts
       [
         #name,

@@ -1,7 +1,6 @@
 require 'rails'
 require 'carmen'
 require 'active_record'
-require 'active_record_ignored_attributes'
 
 require_relative 'inspect_base'
 
