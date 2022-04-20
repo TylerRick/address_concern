@@ -25,13 +25,13 @@ module AddressConcern::Address
           state: {
             validate: false,
 
-            #code_attribute: :state,
             code_attribute: column_for_attribute(:state_code).yield_self(&not_null)&.name ||
                            (column_for_attribute(:state).yield_self(&not_null)&.name unless options.dig(:state, :name_attribute).to_s == 'state'),
 
             name_attribute: column_for_attribute(:state_name).yield_self(&not_null)&.name ||
                            (column_for_attribute(:state).yield_self(&not_null)&.name unless options.dig(:state, :code_attribute).to_s == 'state'),
-            #name_attribute: :state_name,
+
+            on_unknown: ->(value, name_or_code) { },
           },
           country: {
             validate: false,
@@ -40,13 +40,13 @@ module AddressConcern::Address
             # By default, code (same as alpha_2_code) will be used
             carmen_code: :code, # or alpha_2_code, alpha_3_code, :numeric_code
 
-            #code_attribute: :country,
             code_attribute: column_for_attribute(:country_code).yield_self(&not_null)&.name ||
                            (column_for_attribute(:country).yield_self(&not_null)&.name unless options.dig(:country, :name_attribute).to_s == 'country'),
 
             name_attribute: column_for_attribute(:country_name).yield_self(&not_null)&.name ||
                            (column_for_attribute(:country).yield_self(&not_null)&.name unless options.dig(:country, :code_attribute).to_s == 'country'),
-            #name_attribute: :country_name,
+
+            on_unknown: ->(value, name_or_code) { },
           },
           address: {
             validate: false,
@@ -81,7 +81,11 @@ module AddressConcern::Address
     #═══════════════════════════════════════════════════════════════════════════════════════════════
     # Config
 
-    delegate :acts_as_address_config, to: 'self.class'
+    delegate *[
+      :acts_as_address_config,
+      :country_config,
+      :state_config,
+    ], to: 'self.class'
 
     class << self
       #─────────────────────────────────────────────────────────────────────────────────────────────
@@ -140,11 +144,14 @@ module AddressConcern::Address
       super(attributes)
     end
 
+    def self.country_aliases ; [:country_name, :country_code] ; end
+    def self.state_aliases   ; [:state_name, :state_code]     ; end
+
     # country needs to be assigned _before_ state for things to work as intended (can't look up
     # state in state= unless we know which country it is for)
     def reorder_language_attributes(attributes)
-      attributes.reorder(self.class.country_name_attribute,  self.class.country_code_attribute,
-                         self.class.  state_name_attribute,  self.class.  state_code_attribute)
+      attributes.reorder(self.class.country_name_attribute,  self.class.country_code_attribute, *self.class.country_aliases,
+                         self.class.  state_name_attribute,  self.class.  state_code_attribute, *self.class.state_aliases)
     end
 
     #═════════════════════════════════════════════════════════════════════════════════════════════════
@@ -335,7 +342,7 @@ module AddressConcern::Address
 
     #════════════════════════════════════════════════════════════════════════════════════════════════════
     # state attribute(s)
-    # (This is identical to country section above with s/country/state/)
+    # (This is nearly identical to country section above with s/country/state/)
 
     #─────────────────────────────────────────────────────────────────────────────────────────────────
     # setters
@@ -359,11 +366,12 @@ module AddressConcern::Address
       if code.blank?
         clear_state
       else
-        if carmen_country && (state = find_carmen_state_by_code(carmen_country, code))
+        if carmen_country && (state = self.class.find_carmen_state_by_code(carmen_country, code))
           # Only set it if it's a recognized state code
           set_state_from_carmen_state(state)
         else
-          puts carmen_country ? "unknown state code '#{code}'" : "can't find state without country"
+          #puts carmen_country ? "unknown state code '#{code}'" : "can't find state without country"
+          state_config[:on_unknown].(code, :code)
           clear_state
         end
       end
@@ -382,7 +390,8 @@ module AddressConcern::Address
         if carmen_country && (state = self.class.find_carmen_state(carmen_country, name))
           set_state_from_carmen_state(state)
         else
-          puts carmen_country ? "unknown state name '#{name}'" : "can't find state without country"
+          #puts carmen_country ? "unknown state name '#{name}'" : "can't find state without country"
+          state_config[:on_unknown].(name, :name)
           clear_state
         end
       end
@@ -555,7 +564,7 @@ module AddressConcern::Address
     end
 
     def city_state_code
-      [city, state].reject(&:blank?).join(', ')
+      [city, state_code].reject(&:blank?).join(', ')
     end
 
     def city_state_name

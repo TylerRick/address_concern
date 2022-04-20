@@ -21,12 +21,22 @@ describe Address do
     end
   end
 
+  #═════════════════════════════════════════════════════════════════════════════════════════════════
+
   describe 'setting country by name' do
     let(:address) { Address.new }
     specify 'setting to known country' do
       address.country = 'Iceland'
       expect(address.country_name).to eq('Iceland')
       expect(address.country_code).to eq('IS')
+    end
+
+    context "setting to name instead of code" do
+      subject { Address.new(country_name: 'US') }
+      # Unlike state_name=, country_name does not use find_carmen_country. Usually with country
+      # you'll know very well ahead of time whether you're dealing with names or codes. Less likely
+      # with states.
+      it { expect(subject.country_name).to eq(nil) }
     end
 
     specify 'setting to unknown country' do
@@ -69,10 +79,6 @@ describe Address do
       expect(address.country_name).to eq nil
       expect(address.country_code).to eq nil
     end
-
-    specify 'setting to a country that is part of another country (weird)' do
-      # Not currently possible using country_code=
-    end
   end
 
   describe 'country aliases:' do
@@ -87,6 +93,23 @@ describe Address do
       expect(address.country_name).to eq('United States')
     end
   end
+
+  #═════════════════════════════════════════════════════════════════════════════════════════════════
+
+  describe 'setting state by name' do
+    context "simple" do
+      subject { Address.new(state: 'FL', country_name: 'United States') }
+      it { expect(subject.state_code).to eq('FL') }
+    end
+
+    context "setting to name instead of code" do
+      subject { Address.new(state: 'Florida', country_name: 'United States') }
+      # Uses find_carmen_state, which finds by name, falling back to finding by code.
+      it { expect(subject.state_code).to eq('FL') }
+    end
+  end
+
+  #═════════════════════════════════════════════════════════════════════════════════════════════════
 
   describe 'started_filling_out?' do
     let(:address) { Address.new }
@@ -110,6 +133,7 @@ describe Address do
     end
   end
 
+  #═════════════════════════════════════════════════════════════════════════════════════════════════
   describe 'parts and lines' do
     it do
       address = Address.new(
@@ -145,6 +169,7 @@ describe Address do
     context "when address has a state abbrevitation in :state field" do
       let(:user) { User.create }
       subject { user.build_physical_address(address: '123', city: 'Nelspruit', state: 'MP', country_name: 'South Africa') }
+      it { expect(subject.state_code).to         eq('MP') }
       it { expect(subject.city_state_code).to    eq('Nelspruit, MP') }
       it { expect(subject.city_state_name).to    eq('Nelspruit, Mpumalanga') }
       it { expect(subject.city_state_country).to eq('Nelspruit, Mpumalanga, South Africa') }
@@ -160,7 +185,7 @@ describe Address do
     context "when address has a state name entered for :state instead of an abbreviation" do
       let(:user) { User.create }
       subject { user.build_physical_address(address: '123', city: 'Ocala', state: 'Florida', country_name: 'United States') }
-      it { expect(subject.city_state_code).to    eq('Ocala, Florida') }
+      it { expect(subject.city_state_code).to    eq('Ocala, FL') }
       it { expect(subject.city_state_name).to    eq('Ocala, Florida') }
       it { expect(subject.city_state_country).to eq('Ocala, Florida, United States') }
     end
@@ -195,6 +220,7 @@ describe Address do
     end
   end
 
+  #═════════════════════════════════════════════════════════════════════════════════════════════════
   describe '#carmen_country' do
     it { expect(Address.new(country: 'South Africa').carmen_country).to be_a Carmen::Country }
   end
@@ -249,6 +275,7 @@ describe Address do
     #it { Address.new(country: 'France').state_options.map(&:name).should include 'Auvergne-Rhône-Alpes' }
   end
 
+  #═════════════════════════════════════════════════════════════════════════════════════════════════
   describe 'associations' do
     # To do (or maybe not even necessary—seems to work with only the has_one side of the association):
     #describe 'when we have a polymorphic belongs_to :addressable in Address' do
