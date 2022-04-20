@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module AddressConcern
+
 module InspectBase
   def inspect_base(*_items, class: true, id: true)
     items = _items.map { |item|
