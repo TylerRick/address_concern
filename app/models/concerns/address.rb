@@ -248,12 +248,12 @@ module AddressConcern::Address
     # state
 
     def state_name_from_code
-      if carmen_country && (state = find_carmen_state_by_code(carmen_country, state_code))
+      if carmen_country && (state = self.class.find_carmen_state_by_code(carmen_country, state_code))
         state.name
       end
     end
     def state_code_from_name
-      if carmen_country && (state = find_carmen_state_by_name(carmen_country, state_name))
+      if carmen_country && (state = self.class.find_carmen_state_by_name(carmen_country, state_name))
         state.code
       end
     end
@@ -333,7 +333,7 @@ module AddressConcern::Address
       end
     end
 
-    # Alias attribute
+    # Attribute alias
     if country_code_attribute
       unless :country_code == country_code_attribute
         alias_attribute :country_code, :"#{country_code_attribute}"
@@ -360,7 +360,7 @@ module AddressConcern::Address
       end
     end
 
-    # Alias attribute
+    # Attribute alias
     if country_name_attribute
       unless :country_name == country_name_attribute
         alias_attribute :country_name, country_name_attribute
@@ -392,8 +392,7 @@ module AddressConcern::Address
     # code=
 
     # def state_code=(code)
-    define_method :"#{state_code_attribute}=" do |value|
-      byebug
+    define_method :"#{state_code_attribute || 'state_code'}=" do |value|
       if value.blank?
         clear_state
       else
@@ -407,7 +406,7 @@ module AddressConcern::Address
       end
     end
 
-    # Alias attribute
+    # Attribute alias
     if state_code_attribute
       unless :state_code == state_code_attribute
         alias_attribute :state_code, :"#{state_code_attribute}"
@@ -423,7 +422,7 @@ module AddressConcern::Address
     # def state_name=(name)
     # Uses find_carmen_state so if your column was named 'state', you could actually do state = name
     # or code.
-    define_method :"#{state_name_attribute}=" do |value|
+    define_method :"#{state_name_attribute || 'state_name'}=" do |value|
       if value.blank?
         clear_state
       else
@@ -437,7 +436,7 @@ module AddressConcern::Address
       end
     end
 
-    # Alias attribute
+    # Attribute alias
     if state_name_attribute
       unless :state_name == state_name_attribute
         alias_attribute :state_name, state_name_attribute
@@ -556,10 +555,6 @@ module AddressConcern::Address
       elsif state_options.any?
         state_options[0].type.capitalize
       end
-    end
-
-    def state_name
-      carmen_state ? carmen_state.name : state
     end
 
     #════════════════════════════════════════════════════════════════════════════════════════════════════

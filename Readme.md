@@ -37,10 +37,11 @@ just name. Remove from the migration the columns you don't need.
 
 By default, it will store country name in `country_name` or `country` if one of those columns exist,
 and store country code in `country_code` or `country` if one of those columns exist. If _only_ a
-`country` column exists, it will be used as __ by default.
+`country` column exists, it will be used to store the name attribute by default.
 
 By default, it will store state name in `state_name` or `state` if one of those columns exist,
-and store state code in `state_code` or `state` if one of those columns exist.
+and store state code in `state_code` or `state` if one of those columns exist. If _only_ a
+`state` column exists, it will be used to store the name attribute by default.
 
 These column names can be configured. For example, to store country code in `country` and state code
 in `state`, you could do:
