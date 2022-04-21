@@ -1,7 +1,7 @@
-require_relative '../../../lib/core_extensions/hash/reorder'
+require_relative '../core_extensions/hash/reorder'
 using Hash::Reorder
 
-require_relative '../../../lib/core_extensions/string/cleanlines'
+require_relative '../core_extensions/string/cleanlines'
 using String::Cleanlines
 
 require_relative 'inspect_base'

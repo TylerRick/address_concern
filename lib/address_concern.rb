@@ -6,7 +6,6 @@ Carmen.i18n_backend.append_locale_path File.join(File.dirname(__FILE__), '../con
 
 require "zeitwerk"
 loader = Zeitwerk::Loader.for_gem
-loader.push_dir("#{__dir__}/../app/models")
 loader.ignore("#{__dir__}/address_concern/attribute_normalizer.rb")
 loader.ignore("#{__dir__}/address_concern/version.rb")
 loader.ignore("#{__dir__}/core_extensions")
