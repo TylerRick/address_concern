@@ -192,6 +192,7 @@ module Address
     def _assign_attributes(attributes)
       attributes = attributes.symbolize_keys
       attributes = reorder_language_attributes(attributes)
+      attributes = attributes.stringify_keys
       super(attributes)
     end
 
