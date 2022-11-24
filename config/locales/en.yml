@@ -1,0 +1,6 @@
+en:
+  activerecord:
+    errors:
+      messages:
+        # state_not_in_list: "must be one of the valid options for %{country_name}: %{states_for_country}"
+        state_not_in_list: "is not a valid option for %{country_name}"
