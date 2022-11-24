@@ -2,7 +2,7 @@ require 'rails'
 require 'carmen'
 require 'active_record'
 
-Carmen.i18n_backend.append_locale_path File.join(File.dirname(__FILE__), '../config/locale/overlay/en')
+Carmen.i18n_backend.append_locale_path File.join(File.dirname(__FILE__), '../config/locales/overlay/en')
 
 require 'zeitwerk'
 loader = Zeitwerk::Loader.for_gem
@@ -22,3 +22,13 @@ require 'address_concern/version'
 #pp loader.autoloads
 loader.eager_load
 #require_relative '../app/models/address_concern/address'
+
+# When used in a Rails app, this isn't needed because the engine will add its locale load paths, but
+# when not using Rails, including from our tests, the engine isn't loaded.
+I18n.load_path.unshift(
+  *Dir.glob(
+    x=File.expand_path(
+      File.join(%w[.. config locales *.yml]), File.dirname(__FILE__)
+    )
+  )
+)

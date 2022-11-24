@@ -22,6 +22,7 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency 'active_record_ignored_attributes' # for be_same_as
   s.add_development_dependency 'rspec'
+  s.add_development_dependency 'shoulda-matchers'
   s.add_development_dependency 'sqlite3'
   #s.add_development_dependency 'mysql2', '~>0.2.11'
 

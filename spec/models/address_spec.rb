@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Address do
+describe Address, type: :model do
   def klass
     described_class
   end
@@ -213,16 +213,67 @@ describe Address do
 
   #═════════════════════════════════════════════════════════════════════════════════════════════════
 
-  describe 'setting state by name' do
-    context "simple" do
-      subject { Address.new(state: 'FL', country_name: 'United States') }
-      it { expect(subject.state_code).to eq('FL') }
+  describe 'setting state' do
+    # Uses find_carmen_state, which finds by name, falling back to finding by code.
+    describe 'setting state_name_attribute' do
+      before {
+        expect(Address.state_code_attribute).to eq :state_code
+        expect(Address.state_name_attribute).to eq :state
+      }
+
+      context "setting state_name_attribute to code" do
+        subject { Address.new(state: 'FL', country_name: 'United States') }
+        it { expect(subject.state_code).to eq('FL') }
+      end
+
+      context "setting state_name_attribute to name" do
+        subject { Address.new(state: 'Florida', country_name: 'United States') }
+        it { expect(subject.state_code).to eq('FL') }
+      end
     end
 
-    context "setting to name instead of code" do
-      subject { Address.new(state: 'Florida', country_name: 'United States') }
-      # Uses find_carmen_state, which finds by name, falling back to finding by code.
-      it { expect(subject.state_code).to eq('FL') }
+    # Unlike {state_name_attribute}=, which falls back to finding by code, {state_code_attribute}=
+    # _only_ looks up by code by default.
+    describe 'setting state_code_attribute' do
+      subject { Address.new(state_code: input, country_name: 'United States') }
+
+      before {
+        expect(Address.state_code_attribute).to eq :state_code
+        expect(Address.state_name_attribute).to eq :state
+
+      }
+      around(:example) { |example|
+        validate_code = Address.state_config[:validate_code]
+        Address.state_config[:validate_code] = true
+        example.run
+        Address.state_config[:validate_code] = validate_code
+      }
+
+      context "setting state_code_attribute to code" do
+        let(:input) { 'FL' }
+        it { expect(subject.state_code).to eq(input) }
+        it { expect(subject.carmen_state&.code).to eq('FL') }
+        it { expect(subject).to allow_values(input).for(:state_code) }
+      end
+
+      context "setting state_code_attribute to name: doesn't find by default" do
+        let(:input) { 'Florida' }
+        subject { Address.new(state_code: input, country_name: 'United States') }
+        it { expect(subject.state_code).to eq(input) }
+        it { expect(subject.carmen_state&.code).to eq(nil) }
+        it { expect(subject).to_not allow_values(input).for(:state_code).with_message('is not a valid option for United States') }
+
+        context "when state_config[:on_unknown] returns :find_by_name" do
+          before {
+            @orig = Address.state_config[:on_unknown]
+            Address.state_config[:on_unknown] = Proc.new { :find_by_name }
+          }
+          after { Address.state_config[:on_unknown] = @orig }
+          it { expect(subject.carmen_state&.code).to eq('FL') }
+          it { expect(subject.state_code).to eq('FL') }
+          it { expect(subject).to allow_values(input).for(:state_code) }
+        end
+      end
     end
   end
 
@@ -368,6 +419,7 @@ describe Address do
     end
     context "when address has a state name instead of code entered for state_name, and state is for different country" do
       let(:user) { User.create }
+      # Internally, it sees: unknown state code 'FL'
       subject { user.build_physical_address(address: '123', city: 'Ocala', state_code: 'FL', country_name: 'Denmark') }
       it do
         expect(subject.state_code).         to eq('FL')
