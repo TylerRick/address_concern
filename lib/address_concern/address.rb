@@ -54,7 +54,7 @@ module Address
             debug_unknown: false
           },
 
-          address: {
+          street_address: {
             #normalize: false,
             #validate: false,
 
@@ -142,25 +142,25 @@ module Address
 
       #─────────────────────────────────────────────────────────────────────────────────────────────
 
-      # TODO Rename to something less ambiguous so it's clear whether it's only talking about street
-      # address or all attributes in the address model (like #address_attr_names).
-
-      def address_attr_config
-        @acts_as_address_config[:address] || {}
+      def street_address_attr_config
+        if @acts_as_address_config[:address]
+          raise "The :address config key has been renamed to :street_address"
+        end
+        @acts_as_address_config[:street_address] || {}
       end
 
       def street_address_attr_names
-        Array(address_attr_config[:attributes]).map(&:to_sym)
+        Array(street_address_attr_config[:attributes]).map(&:to_sym)
       end
 
       # Address line 1
-      def address_attribute
+      def street_address_attribute
         street_address_attr_names[0]
       end
 
-      def multi_line_address?
+      def multi_line_street_address?
         street_address_attr_names.size == 1 && (
-          column = column_for_attribute(address_attribute)
+          column = column_for_attribute(street_address_attribute)
           column.type == :text
         )
       end
@@ -691,14 +691,14 @@ module Address
     end
 
     # Attribute alias for street address line 1
-    #if address_attribute
-    #  unless :street_address == address_attribute
-    #    alias_attribute :street_address, :"#{address_attribute}"
+    #if street_address_attribute
+    #  unless :street_address == street_address_attribute
+    #    alias_attribute :street_address, :"#{street_address_attribute}"
     #  end
     #end
 
     def street_address_lines
-      if self.class.multi_line_address?
+      if self.class.multi_line_street_address?
         address.to_s.cleanlines.to_a
       else
         self.class.street_address_attr_names.map do |attr_name|

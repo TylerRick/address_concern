@@ -50,14 +50,14 @@ describe 'acts_as_address' do
   describe 'address lines' do
     describe Address do
       it do
-        expect(klass.multi_line_address?).to eq true
+        expect(klass.multi_line_street_address?).to eq true
         expect(klass.street_address_attr_names).to eq [:address]
       end
     end
 
     describe AddressWithSeparateAddressColumns do
       it do
-        expect(klass.multi_line_address?).to eq false
+        expect(klass.multi_line_street_address?).to eq false
         expect(klass.street_address_attr_names).to eq [:address_1, :address_2, :address_3]
       end
     end

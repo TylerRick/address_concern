@@ -312,7 +312,7 @@ describe Address, type: :model do
   describe 'address, address_lines' do
     describe Address do
       it do
-        expect(klass.multi_line_address?).to eq true
+        expect(klass.multi_line_street_address?).to eq true
 
         address = klass.new(address: str = 'Line 1')
         expect(address.address).to eq str
@@ -329,7 +329,7 @@ describe Address, type: :model do
 
     describe AddressWithSeparateAddressColumns do
       it do
-        expect(klass.multi_line_address?).to eq false
+        expect(klass.multi_line_street_address?).to eq false
 
         address = klass.new(
           address_1: 'Line 1',
