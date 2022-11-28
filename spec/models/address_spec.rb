@@ -278,6 +278,13 @@ describe Address, type: :model do
   end
 
   #═════════════════════════════════════════════════════════════════════════════════════════════════
+  describe 'validations' do
+    it do
+      expect(AddressConcern::Address.instance_method(:validate_state_for_country)).to be_a UnboundMethod
+    end
+  end
+
+  #═════════════════════════════════════════════════════════════════════════════════════════════════
 
   describe 'present?' do
     let(:address) { Address.new }

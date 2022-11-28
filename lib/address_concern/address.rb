@@ -181,26 +181,14 @@ module Address
     end
 
     #═════════════════════════════════════════════════════════════════════════════════════════════════
-    # Customizable validation (to add?)
+    # Customizable validation (part 1 of 2)
+    # TODO: Finish adding some optional reasonable default validations
 
     #validates_presence_of :address
     #validates_presence_of :state, if: :state_required?
     #validates_presence_of :country
 
     validate :validate_state_for_country, if: -> { state_config[:validate_code] }
-    def validate_state_for_country
-      return unless country_with_states?
-      return unless state_code
-      return if states_for_country.map(&:code).include? state_code
-
-      errors.add self.class.state_code_attribute, :state_not_in_list, country_name: country_name, states_for_country: states_for_country_str
-      # puts %(errors.messages=\n#{(errors.messages).pretty_inspect.indent(4)})
-    end
-
-    def states_for_country_str
-      return unless country_with_states?
-      states_for_country.map(&:code).join(', ')
-    end
 
     #═════════════════════════════════════════════════════════════════════════════════════════════════
     # Attributes
@@ -798,6 +786,43 @@ module Address
     end
 
     #─────────────────────────────────────────────────────────────────────────────────────────────────
+  end # included do
+
+  #═════════════════════════════════════════════════════════════════════════════════════════════════
+  # Customizable validation (part 2 of 2)
+  # Defining here rather than in included block, so that it is actually defined on the module, which
+  # gives the consumer more flexibility on how to reuse the validation code. You can, for example,
+  # do this:
+  #
+  #    validate \
+  #    def validate_state_for_country
+  #      return unless addressable.is_a?(User)
+  #
+  #      AddressConcern::Address.instance_method(__callee__).bind_call(self)
+  #    end
+  #
+  # or even simply this:
+  #
+  #    prepend AddressConcern::Address::Base
+  #    validate \
+  #    def validate_state_for_country
+  #      return unless addressable.is_a?(User)
+  #
+  #      super
+  #    end
+
+  def validate_state_for_country
+    return unless country_with_states?
+    return unless state_code
+    return if states_for_country.map(&:code).include? state_code
+
+    errors.add self.class.state_code_attribute, :state_not_in_list, country_name: country_name, states_for_country: states_for_country_str
+    # puts %(errors.messages=\n#{(errors.messages).pretty_inspect.indent(4)})
+  end
+
+  def states_for_country_str
+    return unless country_with_states?
+    states_for_country.map(&:code).join(', ')
   end
 end
 end
