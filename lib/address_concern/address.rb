@@ -59,7 +59,7 @@ module Address
             #validate: false,
 
             # Try to auto-detect address columns
-            attributes: column_names.grep(/address$|^address_\d$/),
+            attributes: column_names.grep(/^address$|^address_\d$/),
           }
         }
         @acts_as_address_config = config = {
@@ -142,23 +142,24 @@ module Address
 
       #─────────────────────────────────────────────────────────────────────────────────────────────
 
+      # TODO Rename to something less ambiguous so it's clear whether it's only talking about street
+      # address or all attributes in the address model (like #address_attr_names).
+
       def address_attr_config
         @acts_as_address_config[:address] || {}
       end
 
-      # TODO: rename to something different than the same name as #address_attributes, like
-      # street_address_attr_names
-      def address_attributes
+      def street_address_attr_names
         Array(address_attr_config[:attributes]).map(&:to_sym)
       end
 
       # Address line 1
       def address_attribute
-        address_attributes[0]
+        street_address_attr_names[0]
       end
 
       def multi_line_address?
-        address_attributes.size == 1 && (
+        street_address_attr_names.size == 1 && (
           column = column_for_attribute(address_attribute)
           column.type == :text
         )
@@ -169,7 +170,7 @@ module Address
       # AKA configured_address_attributes
       def address_attr_names
         [
-          *address_attributes,
+          *street_address_attr_names,
           :city,
           state_name_attribute,
           state_code_attribute,
@@ -220,7 +221,7 @@ module Address
 
     # TODO: automatically normalize if attribute_normalizer/normalizy gem is loaded? add a config option to opt out?
     #normalize_attributes :city, :state, :postal_code, :country
-    #normalize_attribute  *address_attributes, with: [:cleanlines, :strip]
+    #normalize_attribute  *street_address_attr_names, with: [:cleanlines, :strip]
 
     #═════════════════════════════════════════════════════════════════════════════════════════════════
     # Country & State (Carmen + custom)
@@ -683,18 +684,24 @@ module Address
     #════════════════════════════════════════════════════════════════════════════════════════════════════
     # Street address / Address lines
 
+    def street_address_attributes
+      attributes_slice(
+        *self.class.street_address_attr_names
+      )
+    end
+
     # Attribute alias for street address line 1
     #if address_attribute
-    #  unless :address == address_attribute
-    #    alias_attribute :address, :"#{address_attribute}"
+    #  unless :street_address == address_attribute
+    #    alias_attribute :street_address, :"#{address_attribute}"
     #  end
     #end
 
-    def address_lines
+    def street_address_lines
       if self.class.multi_line_address?
         address.to_s.cleanlines.to_a
       else
-        self.class.address_attributes.map do |attr_name|
+        self.class.street_address_attr_names.map do |attr_name|
           send attr_name
         end
       end
@@ -707,7 +714,7 @@ module Address
     def lines
       [
         #name,
-        *address_lines,
+        *street_address_lines,
         city_line,
         country_name,
       ].reject(&:blank?)
@@ -760,7 +767,7 @@ module Address
     def parts
       [
         #name,
-        *address_lines,
+        *street_address_lines,
         city,
         state_name,
         postal_code,

@@ -319,7 +319,7 @@ describe Address, type: :model do
 
         address = klass.new(address: str = "Line 1\nLine 2\nLine 3")
         expect(address.address).to eq str
-        expect(address.address_lines).to eq [
+        expect(address.street_address_lines).to eq [
           'Line 1',
           'Line 2',
           'Line 3',
@@ -339,7 +339,7 @@ describe Address, type: :model do
         expect(address.address_1).to eq 'Line 1'
         expect(address.address_2).to eq 'Line 2'
         expect(address.address_3).to eq 'Line 3'
-        expect(address.address_lines).to eq [
+        expect(address.street_address_lines).to eq [
           'Line 1',
           'Line 2',
           'Line 3',
