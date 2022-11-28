@@ -526,8 +526,11 @@ module Address
     # It is not required in the postal address for all countries, however. If you only want to show it
     # if it's required in the postal address, you can make it conditional based on
     # state_included_in_postal_address?.
+    # @return [Carmen::RegionCollection]
     def self.states_for_country(country)
-      return [] unless country
+      empty_set = Carmen::RegionCollection.new([])
+      return empty_set unless country
+
       country = find_carmen_country!(country)
 
       has_states_at_level_1 = country.subregions.any? { |region|
@@ -551,7 +554,7 @@ module Address
       #  # In 2016 what had been 27 regions was reduced to 18.
       #  # France is divided into 18 administrative regions, including 13 metropolitan regions and 5 overseas regions.
       #  # https://en.wikipedia.org/wiki/ISO_3166-2:FR
-      #  []
+      #  empty_set
       elsif has_states_at_level_1
         country.subregions
       else
@@ -794,16 +797,6 @@ module Address
   # gives the consumer more flexibility on how to reuse the validation code. You can, for example,
   # do this:
   #
-  #    validate \
-  #    def validate_state_for_country
-  #      return unless addressable.is_a?(User)
-  #
-  #      AddressConcern::Address.instance_method(__callee__).bind_call(self)
-  #    end
-  #
-  # or even simply this:
-  #
-  #    prepend AddressConcern::Address::Base
   #    validate \
   #    def validate_state_for_country
   #      return unless addressable.is_a?(User)
