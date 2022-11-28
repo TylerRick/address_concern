@@ -51,6 +51,7 @@ module Address
                            (column_for_attribute(:state).yield_self(&not_null)&.name unless options.dig(:state, :code_attribute).to_s == 'state'),
 
             on_unknown: ->(record, name_or_code, carmen_country, value) { },
+            debug_unknown: false
           },
 
           address: {
@@ -186,15 +187,19 @@ module Address
     #validates_presence_of :state, if: :state_required?
     #validates_presence_of :country
 
-    validate \
+    validate :validate_state_for_country, if: -> { state_config[:validate_code] }
     def validate_state_for_country
-      return unless state_config[:validate_code]
       return unless country_with_states?
       return unless state_code
       return if states_for_country.map(&:code).include? state_code
 
-      errors.add :state_code, :state_not_in_list, country_name: country_name, states_for_country: states_for_country.map(&:code).join(', ')
+      errors.add self.class.state_code_attribute, :state_not_in_list, country_name: country_name, states_for_country: states_for_country_str
       # puts %(errors.messages=\n#{(errors.messages).pretty_inspect.indent(4)})
+    end
+
+    def states_for_country_str
+      return unless country_with_states?
+      states_for_country.map(&:code).join(', ')
     end
 
     #═════════════════════════════════════════════════════════════════════════════════════════════════
@@ -470,7 +475,9 @@ module Address
         if carmen_country && (state = self.class.find_carmen_state_by_code(carmen_country, value))
           set_state_from_carmen_state(state)
         else
-          #puts carmen_country ? "unknown state code '#{value}'" : "can't find state without country"
+          if state_config[:debug_unknown]
+            puts carmen_country ? "unknown state code '#{value}'. Valid options: #{states_for_country_str}" : "can't find state without country"
+          end
           on_unknown = state_config[:on_unknown]&.(self, :code, carmen_country, value)
           if on_unknown == :find_by_name && carmen_country && (state = self.class.find_carmen_state_by_name(carmen_country, value))
             set_state_from_carmen_state(state)
