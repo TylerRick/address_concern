@@ -1,5 +1,5 @@
 module AddressConcern
   def self.version
-    "2.1.1"
+    "3.0.0"
   end
 end
