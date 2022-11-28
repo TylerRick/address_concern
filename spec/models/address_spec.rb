@@ -312,14 +312,14 @@ describe Address, type: :model do
   describe 'address, address_lines' do
     describe Address do
       it do
-        expect(klass.multi_line_address?).to eq true
+        expect(klass.multi_line_street_address?).to eq true
 
         address = klass.new(address: str = 'Line 1')
         expect(address.address).to eq str
 
         address = klass.new(address: str = "Line 1\nLine 2\nLine 3")
         expect(address.address).to eq str
-        expect(address.address_lines).to eq [
+        expect(address.street_address_lines).to eq [
           'Line 1',
           'Line 2',
           'Line 3',
@@ -329,7 +329,7 @@ describe Address, type: :model do
 
     describe AddressWithSeparateAddressColumns do
       it do
-        expect(klass.multi_line_address?).to eq false
+        expect(klass.multi_line_street_address?).to eq false
 
         address = klass.new(
           address_1: 'Line 1',
@@ -339,7 +339,7 @@ describe Address, type: :model do
         expect(address.address_1).to eq 'Line 1'
         expect(address.address_2).to eq 'Line 2'
         expect(address.address_3).to eq 'Line 3'
-        expect(address.address_lines).to eq [
+        expect(address.street_address_lines).to eq [
           'Line 1',
           'Line 2',
           'Line 3',
@@ -515,6 +515,7 @@ describe Address, type: :model do
         expect(subject.states_for_country).to be_empty
         expect(subject.states_for_country).to be_a Carmen::RegionCollection
         expect(subject.states_for_country.coded('Roo')).to eq nil
+        expect(subject.country_with_states?).to eq false
       end
     end
 
@@ -524,6 +525,7 @@ describe Address, type: :model do
         expect(subject.states_for_country).to be_empty
         expect(subject.states_for_country).to be_a Carmen::RegionCollection
         expect(subject.states_for_country.coded('Roo')).to eq nil
+        expect(subject.country_with_states?).to eq false
       end
     end
   end
